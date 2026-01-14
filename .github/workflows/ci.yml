@@ -1,0 +1,87 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        build_type: [Debug, Release]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure CMake (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_TESTING=ON
+
+    - name: Configure CMake (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        cmake -B build -S . \
+          -G "Visual Studio 17 2022" \
+          -A x64 \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Run tests
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
+        else
+          ctest --test-dir build --output-on-failure
+        fi
+      shell: bash
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
+
+    - name: Check code formatting
+      run: |
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+
+  sanitizers:
+    name: Sanitizer Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure with Address Sanitizer
+      run: |
+        cmake -B build-asan -S . \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON \
+          -DENABLE_ASAN=ON
+
+    - name: Build with Address Sanitizer
+      run: cmake --build build-asan --config Debug
+
+    - name: Run tests with Address Sanitizer
+      run: ctest --test-dir build-asan --output-on-failure
