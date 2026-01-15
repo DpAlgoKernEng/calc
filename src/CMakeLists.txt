@@ -5,13 +5,13 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Collect source files
 set(CORE_SOURCES
-    # core/tokenizer.cpp
-    # core/parser/shunting_yard_parser.cpp
-    # core/ast/ast_node.cpp
-    # core/ast/binary_op_node.cpp
-    # core/ast/unary_op_node.cpp
-    # core/ast/function_call_node.cpp
-    # core/ast/literal_node.cpp
+    core/tokenizer.cpp
+    core/parser/shunting_yard_parser.cpp
+    core/parser/recursive_descent_parser.cpp
+    core/ast/literal_node.cpp
+    core/ast/binary_op_node.cpp
+    core/ast/unary_op_node.cpp
+    core/ast/function_call_node.cpp
     # core/evaluator/evaluator.cpp
 )
 
@@ -46,6 +46,12 @@ add_library(calc_utils
     ${UTILS_SOURCES}
 )
 target_link_libraries(calc_utils PUBLIC calc_core)
+
+# Create core parsing library
+add_library(calc_core_parser
+    ${CORE_SOURCES}
+)
+target_link_libraries(calc_core_parser PUBLIC calc_core)
 
 # Create calc_cli executable
 add_executable(calc_cli

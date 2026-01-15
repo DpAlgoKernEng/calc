@@ -14,13 +14,9 @@
     "github.gitProtocol": "ssh",
     "remote.downloadExtensionsLocally": true,
     "makefile.configureOnOpen": false,
-    "cmake.cmakePath": "/usr/bin/cmake",
     "cmake.generator": "Unix Makefiles",
     "cmake.sourceDirectory": "${workspaceFolder}",
     "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.configureArgs": [
-        "-DCMAKE_PREFIX_PATH=/opt/homebrew"
-    ],
 
     "clangd.detectExtensionConflicts": true,
     "clangd.fallbackFlags": [],

@@ -6,6 +6,11 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Collect unit test sources
 set(UNIT_TEST_SOURCES
     error_test.cpp
+    tokenizer_test.cpp
+    ast_test.cpp
+    parser_test.cpp
+    shunting_yard_parser_test.cpp
+    recursive_descent_parser_test.cpp
 )
 
 # Create unit test executable
@@ -17,6 +22,7 @@ target_link_libraries(calc_unit_tests
         GTest::gtest
         GTest::gtest_main
         calc_utils
+        calc_core_parser
 )
 
 # Create alias for tests executable
