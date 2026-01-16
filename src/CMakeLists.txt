@@ -17,20 +17,16 @@ set(CORE_SOURCES
 )
 
 set(MODES_SOURCES
-    # modes/standard_mode.cpp
+    modes/standard_mode.cpp
+    modes/mode_manager.cpp
     # modes/scientific_mode.cpp
     # modes/programmer_mode.cpp
 )
 
-set(MATH_SOURCES
-    # math/math_functions.cpp
-    # math/converter.cpp
-)
-
 set(UI_SOURCES
-    # ui/cli/cli_app.cpp
-    # ui/cli/command_parser.cpp
-    # ui/cli/output_formatter.cpp
+    ui/cli/cli_app.cpp
+    ui/cli/command_parser.cpp
+    ui/cli/output_formatter.cpp
 )
 
 set(UTILS_SOURCES
@@ -54,6 +50,18 @@ add_library(calc_core_parser
 )
 target_link_libraries(calc_core_parser PUBLIC calc_core)
 
+# Create modes library
+add_library(calc_modes
+    ${MODES_SOURCES}
+)
+target_link_libraries(calc_modes PUBLIC calc_core_parser calc_utils)
+
+# Create UI library
+add_library(calc_ui
+    ${UI_SOURCES}
+)
+target_link_libraries(calc_ui PUBLIC calc_modes calc_core_parser calc_utils)
+
 # Create calc_cli executable
 add_executable(calc_cli
     main.cpp
@@ -62,7 +70,7 @@ add_executable(calc_cli
 # Link libraries
 target_link_libraries(calc_cli
     PRIVATE
-        calc_utils
+        calc_ui
 )
 
 # Create alias for convenience

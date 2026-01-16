@@ -6,7 +6,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Collect integration test sources
 set(INTEGRATION_TEST_SOURCES
     evaluator_integration_test.cpp
-    # standard_mode_test.cpp
+    standard_mode_integration_test.cpp
     # scientific_mode_test.cpp
     # programmer_mode_test.cpp
 )
@@ -21,6 +21,7 @@ target_link_libraries(calc_integration_tests
         GTest::gtest_main
         calc_utils
         calc_core_parser
+        calc_modes
 )
 
 # Create alias for tests executable

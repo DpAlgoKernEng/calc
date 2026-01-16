@@ -12,6 +12,7 @@ set(UNIT_TEST_SOURCES
     shunting_yard_parser_test.cpp
     recursive_descent_parser_test.cpp
     evaluator_test.cpp
+    modes/standard_mode_test.cpp
 )
 
 # Create unit test executable
@@ -24,6 +25,7 @@ target_link_libraries(calc_unit_tests
         GTest::gtest_main
         calc_utils
         calc_core_parser
+        calc_modes
 )
 
 # Create alias for tests executable
