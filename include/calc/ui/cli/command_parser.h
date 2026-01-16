@@ -53,11 +53,12 @@ public:
      */
     std::string getProgramName() const;
 
-    /**
+/**
      * @brief Generate help message
      * @return Help message string
      */
     static std::string getHelpMessage();
+    static std::string getHelpMessage(const std::vector<std::string>& availableModes);
 
     /**
      * @brief Get version string

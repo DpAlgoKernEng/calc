@@ -9,6 +9,7 @@
 #include "calc/modes/mode_manager.h"
 #include "calc/ui/cli/command_parser.h"
 #include "calc/ui/cli/output_formatter.h"
+#include "calc/ui/cli/history_manager.h"
 #include <string>
 #include <vector>
 #include <sstream>
@@ -24,6 +25,7 @@ struct REPLState {
     std::string lastExpression;
     double lastResult = 0.0;
     bool hasLastResult = false;
+    HistoryManager historyManager;  // History manager for this session
 };
 
 /**
@@ -51,6 +53,20 @@ public:
      * @return Exit code (0 for success, non-zero for error)
      */
     int run();
+
+    /**
+     * @brief Trim whitespace from a string (public for testing)
+     * @param str The string to trim
+     * @return Trimmed string
+     */
+    static std::string trim(const std::string& str);
+
+    /**
+     * @brief Check if a line is a REPL command (public for testing)
+     * @param line The input line
+     * @return true if it's a command
+     */
+    static bool isREPLCommand(const std::string& line);
 
 private:
     int argc_;
@@ -149,22 +165,23 @@ private:
     /**
      * @brief Handle history command
      * @param state REPL state
+     * @param args Command arguments (optional number of entries)
      */
-    void handleHistoryCommand(const REPLState& state);
+    void handleHistoryCommand(const REPLState& state, const std::string& args = "");
 
     /**
-     * @brief Trim whitespace from a string
-     * @param str The string to trim
-     * @return Trimmed string
+     * @brief Handle search command
+     * @param state REPL state
+     * @param keyword Keyword to search for
      */
-    static std::string trim(const std::string& str);
+    void handleSearchCommand(const REPLState& state, const std::string& keyword);
 
     /**
-     * @brief Check if a line is a REPL command
-     * @param line The input line
-     * @return true if it's a command
+     * @brief Handle export command
+     * @param state REPL state
+     * @param filepath Path to export file
      */
-    static bool isREPLCommand(const std::string& line);
+    void handleExportCommand(const REPLState& state, const std::string& filepath);
 };
 
 } // namespace cli

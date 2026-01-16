@@ -101,6 +101,7 @@ int CliApp::runInteractiveMode(const CommandLineOptions& options) {
     printBanner();
 
     REPLState state;
+
     std::string line;
 
     while (true) {
@@ -139,17 +140,27 @@ bool CliApp::evaluateREPLExpression(REPLState& state, const std::string& line, c
     state.expressionCount++;
     state.lastExpression = line;
 
-    EvaluationResult result = currentMode_->evaluate(line);
+    // Expand history references (!N, !!)
+    auto expanded = state.historyManager.expandHistoryReference(line);
+    std::string expressionToEval = expanded.has_value() ? *expanded : line;
+
+    EvaluationResult result = currentMode_->evaluate(expressionToEval);
 
     if (result.isSuccess()) {
         state.lastResult = result.getValue();
         state.hasLastResult = true;
 
-        std::cout << "  [" << state.expressionCount << "] ";
+        // Add to history
+        state.historyManager.addSuccess(line, result.getValue(), currentMode_->getName());
+
+        std::cout << "  [" << state.historyManager.size() << "] ";
         std::cout << formatter_.formatExpression(line) << std::endl;
         std::cout << "  = " << formatter_.formatResult(result) << std::endl;
         std::cout << std::endl;
     } else {
+        // Add failure to history
+        state.historyManager.addFailure(line, result.getErrorMessage(), currentMode_->getName());
+
         std::cerr << "  Error: " << result.getErrorMessage();
         if (result.getErrorPosition() > 0) {
             std::cerr << " at position " << result.getErrorPosition();
@@ -190,7 +201,13 @@ void CliApp::printREPLHelp() {
     std::cout << "  clear          - Clear the screen and history" << std::endl;
     std::cout << "  mode <name>    - Switch calculator mode" << std::endl;
     std::cout << "  precision <n>   - Set output precision" << std::endl;
-    std::cout << "  history        - Show calculation history" << std::endl;
+    std::cout << "  history [N]    - Show calculation history (N entries or all)" << std::endl;
+    std::cout << "  search <kw>    - Search history by keyword" << std::endl;
+    std::cout << "  export <file>  - Export history to file" << std::endl;
+    std::cout << std::endl;
+    std::cout << "History references:" << std::endl;
+    std::cout << "  !!             - Use last result" << std::endl;
+    std::cout << "  !N             - Use N-th most recent result (0 = most recent)" << std::endl;
     std::cout << std::endl;
     std::cout << "Available modes: ";
     auto modes = modeManager_.getAvailableModes();
@@ -223,7 +240,11 @@ bool CliApp::processREPLCommand(const std::string& command, REPLState& state, co
     } else if (cmd == "precision" || cmd == "prec") {
         handlePrecisionCommand(args, options);
     } else if (cmd == "history" || cmd == "hist") {
-        handleHistoryCommand(state);
+        handleHistoryCommand(state, args);
+    } else if (cmd == "search") {
+        handleSearchCommand(state, args);
+    } else if (cmd == "export") {
+        handleExportCommand(state, args);
     } else {
         std::cout << "Unknown command: " << cmd << std::endl;
         std::cout << "Type 'help' for available commands." << std::endl;
@@ -304,15 +325,79 @@ void CliApp::handlePrecisionCommand(const std::string& args, const CommandLineOp
     }
 }
 
-void CliApp::handleHistoryCommand(const REPLState& state) {
-    if (!state.hasLastResult) {
+void CliApp::handleHistoryCommand(const REPLState& state, const std::string& args) {
+    const auto& entries = state.historyManager.getAllEntries();
+
+    if (entries.empty()) {
         std::cout << "No calculations yet." << std::endl;
         return;
     }
 
-    std::cout << "Last expression: " << state.lastExpression << std::endl;
-    std::cout << "Last result: " << state.lastResult << std::endl;
-    std::cout << "Total calculations: " << state.expressionCount << std::endl;
+    size_t count = entries.size();
+    if (!args.empty()) {
+        try {
+            size_t n = std::stoull(args);
+            count = std::min(n, entries.size());
+        } catch (const std::exception&) {
+            std::cout << "Invalid count: " << args << std::endl;
+            return;
+        }
+    }
+
+    std::cout << std::endl;
+    std::cout << "Calculation History (" << count << " of " << entries.size() << "):" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+
+    // Show the most recent entries
+    size_t startIndex = entries.size() - count;
+    for (size_t i = startIndex; i < entries.size(); ++i) {
+        const auto& entry = entries[i];
+        std::cout << HistoryManager::formatEntry(entry) << std::endl;
+    }
+
+    std::cout << std::string(50, '-') << std::endl;
+    std::cout << "Total: " << entries.size() << " entries" << std::endl;
+    std::cout << std::endl;
+}
+
+void CliApp::handleSearchCommand(const REPLState& state, const std::string& keyword) {
+    if (keyword.empty()) {
+        std::cout << "Usage: search <keyword>" << std::endl;
+        return;
+    }
+
+    auto results = state.historyManager.search(keyword);
+
+    if (results.empty()) {
+        std::cout << "No entries found matching '" << keyword << "'" << std::endl;
+        return;
+    }
+
+    std::cout << std::endl;
+    std::cout << "Found " << results.size() << " entries matching '" << keyword << "':" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+
+    for (const auto& entry : results) {
+        std::cout << HistoryManager::formatEntry(entry) << std::endl;
+    }
+
+    std::cout << std::string(50, '-') << std::endl;
+    std::cout << std::endl;
+}
+
+void CliApp::handleExportCommand(const REPLState& state, const std::string& filepath) {
+    if (filepath.empty()) {
+        std::cout << "Usage: export <filepath>" << std::endl;
+        return;
+    }
+
+    if (state.historyManager.exportToText(filepath)) {
+        std::cout << "History exported to: " << filepath << std::endl;
+        std::cout << "Total entries: " << state.historyManager.size() << std::endl;
+    } else {
+        std::cout << "Failed to export history to: " << filepath << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 std::string CliApp::trim(const std::string& str) {
@@ -341,7 +426,8 @@ bool CliApp::isREPLCommand(const std::string& line) {
 
     return cmd == "quit" || cmd == "exit" || cmd == "help" || cmd == "?" ||
            cmd == "clear" || cmd == "mode" || cmd == "precision" ||
-           cmd == "prec" || cmd == "history" || cmd == "hist";
+           cmd == "prec" || cmd == "history" || cmd == "hist" ||
+           cmd == "search" || cmd == "export";
 }
 
 } // namespace cli

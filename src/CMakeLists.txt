@@ -27,6 +27,7 @@ set(UI_SOURCES
     ui/cli/cli_app.cpp
     ui/cli/command_parser.cpp
     ui/cli/output_formatter.cpp
+    ui/cli/history_manager.cpp
 )
 set(UTILS_SOURCES
     utils/error.cpp

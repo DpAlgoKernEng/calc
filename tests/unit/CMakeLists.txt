@@ -16,6 +16,10 @@ set(UNIT_TEST_SOURCES
     modes/standard_mode_test.cpp
     modes/scientific_mode_test.cpp
     modes/programmer_mode_test.cpp
+    cli/command_parser_test.cpp
+    cli/output_formatter_test.cpp
+    cli/cli_app_test.cpp
+    cli/history_manager_test.cpp
 )
 
 # Create unit test executable
@@ -30,6 +34,7 @@ target_link_libraries(calc_unit_tests
         calc_core
         calc_modes
         calc_math
+        calc_ui
 )
 
 # Create alias for tests executable

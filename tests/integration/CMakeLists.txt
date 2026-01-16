@@ -9,6 +9,7 @@ set(INTEGRATION_TEST_SOURCES
     standard_mode_integration_test.cpp
     scientific_mode_integration_test.cpp
     programmer_mode_integration_test.cpp
+    cli_integration_test.cpp
 )
 
 # Create integration test executable
@@ -22,6 +23,7 @@ target_link_libraries(calc_integration_tests
         calc_utils
         calc_core
         calc_modes
+        calc_ui
 )
 
 # Create alias for tests executable
