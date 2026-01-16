@@ -17,6 +17,18 @@
 namespace calc {
 
 /**
+ * @brief Operator semantics for different modes
+ *
+ * Defines how an operator should behave in different calculator modes.
+ * For example, '^' can be power operation (Standard/Scientific modes)
+ * or bitwise XOR (Programmer mode).
+ */
+enum class OperatorSemantics {
+    POWER,        // Power/exponentiation (Standard/Scientific modes)
+    BITWISE_XOR    // Bitwise XOR (Programmer mode)
+};
+
+/**
  * @brief Result of an evaluation operation
  *
  * Contains either a successful numeric result or error information.
@@ -145,9 +157,24 @@ public:
      */
     EvaluationResult callFunction(const std::string& name, const std::vector<double>& args);
 
+    /**
+     * @brief Get the semantics for a specific operator
+     * @param op The operator string (e.g., "^")
+     * @return The operator semantics, defaults to POWER for unknown operators
+     */
+    OperatorSemantics getOperatorSemantics(const std::string& op) const;
+
+    /**
+     * @brief Set the semantics for a specific operator
+     * @param op The operator string (e.g., "^")
+     * @param semantics The semantics to use for this operator
+     */
+    void setOperatorSemantics(const std::string& op, OperatorSemantics semantics);
+
 private:
     int precision_;
     std::unordered_map<std::string, std::function<double(const std::vector<double>&)>> functions_;
+    std::unordered_map<std::string, OperatorSemantics> operatorSemantics_;
 };
 
 /**

@@ -202,8 +202,10 @@ TEST_F(StandardModeTest, EmptyExpression) {
 }
 
 TEST_F(StandardModeTest, InvalidOperator) {
+    // Note: & is now a valid bitwise operator
     auto result = mode_->evaluate("2 & 3");
-    ASSERT_TRUE(result.isError());
+    ASSERT_TRUE(result.isSuccess());
+    EXPECT_EQ(result.getValue(), 2);  // 2 & 3 = 2
 }
 
 // Test precision setting
@@ -249,7 +251,7 @@ TEST_F(StandardModeTest, BothParsersGiveSameResult) {
 TEST_F(StandardModeTest, ModeManagerRegistration) {
     ModeManager manager;
     EXPECT_TRUE(manager.hasMode("standard"));
-    EXPECT_EQ(manager.getModeCount(), 2);  // standard + scientific
+    EXPECT_EQ(manager.getModeCount(), 3);  // standard + scientific + programmer
 }
 
 TEST_F(StandardModeTest, ModeManagerGetDefault) {

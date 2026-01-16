@@ -90,7 +90,14 @@ private:
     static bool isOperator(char c) noexcept;
 
     /**
-     * @brief Tokenize a numeric literal
+     * @brief Tokenize a numeric literal with base prefix (0b, 0x, 0o)
+     * Handles binary, octal, hexadecimal, and decimal numbers
+     * @throws SyntaxError on invalid number format
+     */
+    Token readNumberWithPrefix();
+
+    /**
+     * @brief Tokenize a numeric literal (legacy decimal-only)
      * Handles integers, decimals, and scientific notation
      * @throws SyntaxError on invalid number format
      */

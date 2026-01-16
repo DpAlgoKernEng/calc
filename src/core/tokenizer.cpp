@@ -27,10 +27,13 @@ std::string tokenTypeToString(TokenType type) {
     }
 }
 
-Token::Token() : type(TokenType::UNKNOWN), value(""), position(0) {}
+Token::Token() : type(TokenType::UNKNOWN), value(""), position(0), argCount(0), numberBase(NumberBase::DECIMAL) {}
 
 Token::Token(TokenType t, const std::string& v, size_t pos)
-    : type(t), value(v), position(pos) {}
+    : type(t), value(v), position(pos), argCount(0), numberBase(NumberBase::DECIMAL) {}
+
+Token::Token(TokenType t, const std::string& v, size_t pos, NumberBase base)
+    : type(t), value(v), position(pos), argCount(0), numberBase(base) {}
 
 bool Token::isOperator() const noexcept {
     return type == TokenType::OPERATOR;
@@ -52,9 +55,13 @@ int Token::getPrecedence() const {
     // Operator precedence table
     // Higher number = higher precedence
     if (value == "^") {
-        return 4;  // Exponentiation
-    } else if (value == "*" || value == "/" || value == "%") {
-        return 3;  // Multiplication, division, modulo
+        return 4;  // Power (exponentiation) - highest precedence for arithmetic
+    } else if (value == "<<" || value == ">>") {
+        return 4;  // Shift operators - same as power
+    } else if (value == "&") {
+        return 3;  // Bitwise AND
+    } else if (value == "|" || value == "*" || value == "/" || value == "%") {
+        return 3;  // Bitwise OR, Multiplication, Division, Modulo
     } else if (value == "+" || value == "-") {
         return 2;  // Addition, subtraction
     }
@@ -125,13 +132,100 @@ bool Tokenizer::isLetter(char c) noexcept {
 }
 
 bool Tokenizer::isOperator(char c) noexcept {
-    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '%';
+    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '%' ||
+           c == '&' || c == '|' || c == '~' || c == '<' || c == '>';
 }
 
 void Tokenizer::skipWhitespace() {
     while (!isAtEnd() && isWhitespace(current())) {
         advance();
     }
+}
+
+Token Tokenizer::readNumberWithPrefix() {
+    size_t startPos = pos_;
+
+    // Check for base prefix
+    NumberBase base = NumberBase::DECIMAL;
+
+    if (isBinaryPrefix(input_, pos_)) {
+        base = NumberBase::BINARY;
+        pos_ += 2;  // Skip "0b" or "0B"
+    } else if (isHexPrefix(input_, pos_)) {
+        base = NumberBase::HEXADECIMAL;
+        pos_ += 2;  // Skip "0x" or "0X"
+    } else if (isOctalPrefix(input_, pos_)) {
+        base = NumberBase::OCTAL;
+        pos_ += 2;  // Skip "0o" or "0O"
+    }
+
+    // Read the number part (digits only, no decimal points for hex/binary/octal)
+    std::string number;
+
+    if (base == NumberBase::BINARY) {
+        while (!isAtEnd() && (current() == '0' || current() == '1')) {
+            number += advance();
+        }
+    } else if (base == NumberBase::OCTAL) {
+        while (!isAtEnd() && current() >= '0' && current() <= '7') {
+            number += advance();
+        }
+    } else if (base == NumberBase::HEXADECIMAL) {
+        while (!isAtEnd() && std::isxdigit(static_cast<unsigned char>(current()))) {
+            number += advance();
+        }
+    } else {
+        // Decimal - allow decimal point and scientific notation
+        bool hasDecimal = false;
+
+        // Integer part
+        while (!isAtEnd() && isDigit(current())) {
+            number += advance();
+        }
+
+        // Decimal part (only one decimal point allowed)
+        if (!isAtEnd() && current() == '.') {
+            if (hasDecimal) {
+                throw SyntaxError("Invalid number format: multiple decimal points", startPos);
+            }
+            hasDecimal = true;
+            number += advance();
+
+            // Must have at least one digit after decimal point
+            if (isAtEnd() || !isDigit(current())) {
+                throw SyntaxError("Invalid number format: decimal point without digits", startPos);
+            }
+
+            while (!isAtEnd() && isDigit(current())) {
+                number += advance();
+            }
+        }
+
+        // Scientific notation
+        if (!isAtEnd() && (current() == 'e' || current() == 'E')) {
+            number += advance();
+
+            // Optional sign
+            if (!isAtEnd() && (current() == '+' || current() == '-')) {
+                number += advance();
+            }
+
+            // Must have at least one digit after 'e' or 'E'
+            if (isAtEnd() || !isDigit(current())) {
+                throw SyntaxError("Invalid number format: exponent without digits", startPos);
+            }
+
+            while (!isAtEnd() && isDigit(current())) {
+                number += advance();
+            }
+        }
+    }
+
+    if (number.empty()) {
+        throw SyntaxError("Expected digits after base prefix", startPos);
+    }
+
+    return Token(TokenType::NUMBER, number, startPos, base);
 }
 
 Token Tokenizer::readNumber() {
@@ -207,10 +301,29 @@ Token Tokenizer::readIdentifier() {
 Token Tokenizer::readOperator() {
     size_t startPos = pos_;
     std::string op;
-    op += advance();
 
-    // Currently we only support single-character operators
-    // Future extension could support multi-character operators (e.g., "**", "<=", etc.)
+    // Check for multi-character operators (<<, >>)
+    char c1 = current();
+    char c2 = peek(1);
+
+    if (c1 == '<' && c2 == '<') {
+        op += advance();
+        op += advance();
+        return Token(TokenType::OPERATOR, op, startPos);
+    } else if (c1 == '>' && c2 == '>') {
+        op += advance();
+        op += advance();
+        return Token(TokenType::OPERATOR, op, startPos);
+    } else if (c1 == '<' && c2 == '=') {
+        // Not supported yet, but prevent it from being interpreted as < and =
+        throw SyntaxError("Unsupported operator '<='", startPos);
+    } else if (c1 == '>' && c2 == '=') {
+        // Not supported yet, but prevent it from being interpreted as > and =
+        throw SyntaxError("Unsupported operator '>='", startPos);
+    }
+
+    // Single character operators
+    op += advance();
 
     return Token(TokenType::OPERATOR, op, startPos);
 }
@@ -245,6 +358,26 @@ std::vector<Token> Tokenizer::tokenize() {
 
         char c = current();
         size_t startPos = pos_;
+
+        // Check for base prefixes (0b, 0x, 0o)
+        if (c == '0' && peek(1) != '\0') {
+            if (isBinaryPrefix(input_, pos_)) {
+                tokens.push_back(readNumberWithPrefix());
+                continue;
+            } else if (isHexPrefix(input_, pos_)) {
+                tokens.push_back(readNumberWithPrefix());
+                continue;
+            } else if (isOctalPrefix(input_, pos_)) {
+                tokens.push_back(readNumberWithPrefix());
+                continue;
+            }
+        }
+
+        // Handle shift operators (<<, >>) - let readOperator handle them
+        if ((c == '<' || c == '>') && peek(1) == c) {
+            tokens.push_back(readOperator());
+            continue;
+        }
 
         if (isDigit(c) || (c == '.' && isDigit(peek(1)))) {
             // Check if previous token was a number - if so, this might be an error

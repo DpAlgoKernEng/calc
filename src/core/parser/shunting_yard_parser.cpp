@@ -4,6 +4,7 @@
  */
 
 #include "calc/core/shunting_yard_parser.h"
+#include "calc/math/converter.h"
 
 namespace calc {
 
@@ -34,8 +35,8 @@ bool ShuntingYardParser::isUnaryOperator(const std::vector<Token>& tokens, size_
         return false;
     }
 
-    // Only + and - can be unary
-    if (token.value != "+" && token.value != "-") {
+    // +, -, ~ can be unary
+    if (token.value != "+" && token.value != "-" && token.value != "~") {
         return false;
     }
 
@@ -71,11 +72,17 @@ int ShuntingYardParser::getPrecedence(const Token& op) const {
         return 3;  // Same precedence as exponentiation
     }
 
-    // Binary operators
+    // Binary operators (lower number = higher precedence)
     if (op.value == "^") {
         return 3;  // Exponentiation (right-associative)
+    } else if (op.value == "<<" || op.value == ">>") {
+        return 3;  // Shift operators (same precedence as power)
+    } else if (op.value == "&") {
+        return 2;  // Bitwise AND (same precedence as mult/div)
     } else if (op.value == "*" || op.value == "/" || op.value == "%") {
         return 2;  // Multiplication, division, modulo
+    } else if (op.value == "|") {
+        return 1;  // Bitwise OR (same precedence as add/sub)
     } else if (op.value == "+" || op.value == "-") {
         return 1;  // Addition, subtraction
     }
@@ -337,14 +344,25 @@ std::unique_ptr<ASTNode> ShuntingYardParser::buildAST(const std::vector<Token>& 
     for (const auto& token : postfixTokens) {
         switch (token.type) {
             case TokenType::NUMBER: {
-                double value = std::stod(token.value);
+                double value;
+                // Handle different number bases
+                if (token.numberBase == NumberBase::BINARY) {
+                    value = static_cast<double>(Converter::binaryToDecimal(token.value));
+                } else if (token.numberBase == NumberBase::OCTAL) {
+                    value = static_cast<double>(Converter::octalToDecimal(token.value));
+                } else if (token.numberBase == NumberBase::HEXADECIMAL) {
+                    value = static_cast<double>(Converter::hexToDecimal(token.value));
+                } else {
+                    // Default: decimal
+                    value = std::stod(token.value);
+                }
                 operandStack.push(std::make_unique<LiteralNode>(value));
                 break;
             }
 
             case TokenType::OPERATOR: {
                 // Check if it's a unary operator
-                if (token.value == "u+" || token.value == "u-") {
+                if (token.value == "u+" || token.value == "u-" || token.value == "u~") {
                     // Unary operator
                     if (operandStack.empty()) {
                         throw CalculatorException(ErrorCode::UNEXPECTED_TOKEN, "Missing operand for unary operator", token.position);

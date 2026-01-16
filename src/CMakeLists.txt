@@ -1,5 +1,4 @@
 # Source code CMakeLists.txt for calc
-
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
@@ -15,62 +14,57 @@ set(CORE_SOURCES
     core/evaluator/evaluator.cpp
     core/evaluator/evaluator_visitor.cpp
 )
-
+set(MATH_SOURCES
+    math/converter.cpp
+)
 set(MODES_SOURCES
     modes/standard_mode.cpp
     modes/scientific_mode.cpp
+    modes/programmer_mode.cpp
     modes/mode_manager.cpp
-    # modes/programmer_mode.cpp
 )
-
 set(UI_SOURCES
     ui/cli/cli_app.cpp
     ui/cli/command_parser.cpp
     ui/cli/output_formatter.cpp
 )
-
 set(UTILS_SOURCES
     utils/error.cpp
-    # utils/string_utils.cpp
 )
 
-# Create core library (for future use)
-add_library(calc_core INTERFACE)
-target_include_directories(calc_core INTERFACE ${CMAKE_SOURCE_DIR}/include)
+# Create core library
+add_library(calc_core ${CORE_SOURCES})
+target_include_directories(calc_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
-# Create utils library
-add_library(calc_utils
-    ${UTILS_SOURCES}
-)
-target_link_libraries(calc_utils PUBLIC calc_core)
-
-# Create core parsing library
-add_library(calc_core_parser
-    ${CORE_SOURCES}
-)
-target_link_libraries(calc_core_parser PUBLIC calc_core)
+# Create math library
+add_library(calc_math ${MATH_SOURCES})
+target_include_directories(calc_math PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(calc_math PUBLIC calc_core)
 
 # Create modes library
-add_library(calc_modes
-    ${MODES_SOURCES}
-)
-target_link_libraries(calc_modes PUBLIC calc_core_parser calc_utils)
+add_library(calc_modes ${MODES_SOURCES})
+target_include_directories(calc_modes PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(calc_modes PUBLIC calc_core calc_math)
 
 # Create UI library
-add_library(calc_ui
-    ${UI_SOURCES}
-)
-target_link_libraries(calc_ui PUBLIC calc_modes calc_core_parser calc_utils)
+add_library(calc_ui ${UI_SOURCES})
+target_include_directories(calc_ui PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(calc_ui PUBLIC calc_modes calc_core calc_utils)
+
+# Create utils library
+add_library(calc_utils ${UTILS_SOURCES})
+target_include_directories(calc_utils PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Create calc_cli executable
 add_executable(calc_cli
     main.cpp
 )
-
-# Link libraries
 target_link_libraries(calc_cli
     PRIVATE
         calc_ui
+        calc_modes
+        calc_core
+        calc_utils
 )
 
 # Create alias for convenience

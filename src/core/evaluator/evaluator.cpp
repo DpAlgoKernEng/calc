@@ -79,7 +79,7 @@ std::string EvaluationResult::toString() const {
 //=============================================================================
 
 EvaluationContext::EvaluationContext(int precision)
-    : precision_(precision)
+    : precision_(precision), operatorSemantics_()
 {}
 
 int EvaluationContext::getPrecision() const noexcept {
@@ -124,6 +124,22 @@ EvaluationResult EvaluationContext::callFunction(
         return EvaluationResult(ErrorCode::EVALUATION_ERROR,
             "Error calling function '" + name + "': " + e.what());
     }
+}
+
+OperatorSemantics EvaluationContext::getOperatorSemantics(const std::string& op) const {
+    auto it = operatorSemantics_.find(op);
+    if (it != operatorSemantics_.end()) {
+        return it->second;
+    }
+    // Default to POWER for backward compatibility
+    return OperatorSemantics::POWER;
+}
+
+void EvaluationContext::setOperatorSemantics(
+    const std::string& op,
+    OperatorSemantics semantics)
+{
+    operatorSemantics_[op] = semantics;
 }
 
 //=============================================================================

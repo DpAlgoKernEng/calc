@@ -13,6 +13,10 @@ namespace calc {
 StandardMode::StandardMode(int precision)
     : context_(precision)
     , useRecursiveDescentParser_(false) {
+    // Configure operator semantics for Standard mode
+    // '^' is power/exponentiation in Standard and Scientific modes
+    context_.setOperatorSemantics("^", OperatorSemantics::POWER);
+
     // Register basic math functions (sqrt, abs, etc.)
     // Standard mode uses minimal functions, but we can include some basic ones
     MathFunctions::registerBuiltInFunctions(context_);

@@ -23,7 +23,8 @@ protected:
 TEST_F(ScientificModeIntegrationTest, ModeManagerRegistration) {
     EXPECT_TRUE(modeManager_->hasMode("standard"));
     EXPECT_TRUE(modeManager_->hasMode("scientific"));
-    EXPECT_EQ(modeManager_->getModeCount(), 2);
+    EXPECT_TRUE(modeManager_->hasMode("programmer"));  // programmer mode added in phase 6
+    EXPECT_EQ(modeManager_->getModeCount(), 3);
 }
 
 // Test mode name and description

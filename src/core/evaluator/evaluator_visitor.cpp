@@ -140,10 +140,31 @@ EvaluationResult EvaluatorVisitor::evaluateBinaryOp(
             result = left * right;
         } else if (opStr == "/") {
             result = left / right;
-        } else if (opStr == "^") {
-            result = std::pow(left, right);
         } else if (opStr == "%") {
             result = std::fmod(left, right);
+        } else if (opStr == "^") {
+            // Check operator semantics from context
+            OperatorSemantics semantics = context_->getOperatorSemantics("^");
+            if (semantics == OperatorSemantics::BITWISE_XOR) {
+                // Programmer mode: Bitwise XOR
+                result = static_cast<double>(
+                    static_cast<long long>(left) ^ static_cast<long long>(right));
+            } else {
+                // Standard/Scientific mode: Power operation (exponentiation)
+                result = std::pow(left, right);
+            }
+        } else if (opStr == "&") {
+            // Bitwise AND
+            result = static_cast<double>(static_cast<long long>(left) & static_cast<long long>(right));
+        } else if (opStr == "|") {
+            // Bitwise OR
+            result = static_cast<double>(static_cast<long long>(left) | static_cast<long long>(right));
+        } else if (opStr == "<<") {
+            // Left shift
+            result = static_cast<double>(static_cast<long long>(left) << static_cast<long long>(right));
+        } else if (opStr == ">>") {
+            // Right shift
+            result = static_cast<double>(static_cast<long long>(left) >> static_cast<long long>(right));
         } else {
             return EvaluationResult(ErrorCode::EVALUATION_ERROR,
                 "Unknown binary operator: " + opStr, position);
@@ -196,8 +217,9 @@ EvaluationResult EvaluatorVisitor::evaluateUnaryOp(
             result = operand;
         } else if (opStr == "-") {
             result = -operand;
-        } else if (opStr == "~") {
+        } else if (opStr == "~" || opStr == "u~") {
             // Bitwise NOT (for integer-like values)
+            // Tokenizer marks ~ as u~ for unary operator
             result = ~static_cast<long long>(operand);
         } else {
             return EvaluationResult(ErrorCode::EVALUATION_ERROR,
