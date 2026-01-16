@@ -11,6 +11,7 @@ set(UNIT_TEST_SOURCES
     parser_test.cpp
     shunting_yard_parser_test.cpp
     recursive_descent_parser_test.cpp
+    evaluator_test.cpp
 )
 
 # Create unit test executable

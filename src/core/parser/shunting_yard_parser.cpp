@@ -148,13 +148,64 @@ void ShuntingYardParser::validateOperators(const std::vector<Token>& tokens) con
         // Example: 1++2 - prev is binary, current would be unary (+2)
         // This is rejected for clarity, even though 1+(+2) is mathematically valid
         // But 5+-3 is accepted because unary - is clearer
-        const Token& prevPrev = tokens[i - 2];
-        if (prevPrev.type == TokenType::NUMBER) {
-            // prev was binary after a number
-            // If current is +, reject it (ambiguous)
-            // If current is -, accept it (clear unary minus)
-            if (current.value == "+") {
-                throw SyntaxError("Consecutive operators are not allowed", current.position);
+        // Also, +5 + +3 is accepted because the middle + is not binary
+        // Check prevPrev only if available (i >= 2)
+        if (i >= 2) {
+            const Token& prevPrev = tokens[i - 2];
+            // If prevPrev is a number, prev was in binary position (after operand)
+            // We want to reject cases like 1++2 where prev is binary + followed by unary +
+            // But accept +5 + +3 where the middle + is binary and current is unary
+            // The difference: in 1++2, prevPrev (1) is an operand
+            // In +5 + +3, prevPrev (5) is also an operand, BUT the middle + is between operands
+            // Actually wait, we need to check if there's an operand on BOTH sides of prev
+            if (prevPrev.type == TokenType::NUMBER && current.value == "+") {
+                // Check if there's a NUMBER (or similar operand) after prevPrev to see if prev is binary
+                // For 1++2: prevPrev=1 (NUM), prev=+, current=+ - prev is NOT binary
+                // For +5 + +3: prevPrev=5 (NUM), prev=+, current=+ - prev IS binary
+                // We want to reject 1++2 but accept +5 + +3
+                // The key is: is prev actually in a binary position?
+                // prev is binary if it has an operand before it
+                // For 1++2: prev has NUM before (1) and + after - middle is binary!
+                // For +5 + +3: prev has NUM before (5) and + after - middle is binary!
+                // Hmm, both seem to have same structure...
+
+                // Actually, the difference is WHERE the consecutive operators appear:
+                // 1++2: the ++ appears immediately after a number
+                // +5 + +3: the ++ appears after a binary + operator
+                // Wait no, let me reconsider...
+
+                // For +5 + +3 at index 3 (second +):
+                //   current = +, prev = +, prevPrev = 5
+                //   The prevPrev (5) is a NUMBER
+                //   The prev (+) is after 5, so it's binary
+                //   The current (+) is after prev (+), so it's unary
+                //   This is +5 + (+3) = valid
+
+                // For 1++2 at index 2 (second +):
+                //   current = +, prev = +, prevPrev = 1
+                //   The prevPrev (1) is a NUMBER
+                //   The prev (+) is after 1, so it's binary
+                //   The current (+) is after prev (+), so it's unary
+                //   This is 1 + (+2) = but ambiguous because the + after 1 looks like it should be binary
+
+                // The ambiguity in 1++2 is that "1++" visually looks like an increment operator
+                // We want to reject this specific case but allow +5 + +3
+                // The key: is prevPrev a NUMBER AND is prev the first token OR is prevPrev also an operator?
+                // For 1++2: prevPrev = NUM, prevPrevPrev doesn't exist (index -1)
+                // For +5 + +3: prevPrev = NUM, prevPrevPrev = OPERATOR (the first +)
+
+                // Check if prevPrev itself is preceded by a NUMBER (or nothing)
+                if (i >= 3) {
+                    const Token& prevPrevPrev = tokens[i - 3];
+                    // If prevPrevPrev is also a NUMBER or doesn't exist, it's like 1++2
+                    // If prevPrevPrev is an OPERATOR, it's like +5 + +3
+                    if (prevPrevPrev.type == TokenType::NUMBER || i == 2) {
+                        throw SyntaxError("Consecutive operators are not allowed: ambiguous unary '+'", current.position);
+                    }
+                } else if (i == 2) {
+                    // At index 2 with no prevPrevPrev, this is 1++2 style
+                    throw SyntaxError("Consecutive operators are not allowed: ambiguous unary '+'", current.position);
+                }
             }
         }
     }
@@ -162,7 +213,9 @@ void ShuntingYardParser::validateOperators(const std::vector<Token>& tokens) con
 
 std::vector<Token> ShuntingYardParser::toPostfix(const std::vector<Token>& tokens) {
     std::vector<Token> output;
-    std::stack<Token> operatorStack;
+    // Use vector instead of stack to allow index-based access for function arg count tracking
+    std::vector<Token> operatorStack;
+    const Token* top = nullptr;  // Declare outside switch for use in OPERATOR and EOF cases
 
     for (size_t i = 0; i < tokens.size(); ++i) {
         const Token& token = tokens[i];
@@ -172,55 +225,74 @@ std::vector<Token> ShuntingYardParser::toPostfix(const std::vector<Token>& token
                 output.push_back(token);
                 break;
 
-            case TokenType::FUNCTION:
-                operatorStack.push(token);
+            case TokenType::FUNCTION: {
+                // Push function onto stack with argCount initialized to 0
+                Token funcToken(token);
+                funcToken.argCount = 0;
+                operatorStack.push_back(funcToken);
                 break;
+            }
 
             case TokenType::COMMA:
                 // Pop operators until we hit a left parenthesis
-                while (!operatorStack.empty() && operatorStack.top().type != TokenType::LPAREN) {
-                    output.push_back(operatorStack.top());
-                    operatorStack.pop();
+                while (!operatorStack.empty() && operatorStack.back().type != TokenType::LPAREN) {
+                    output.push_back(operatorStack.back());
+                    operatorStack.pop_back();
                 }
                 if (operatorStack.empty()) {
                     throw SyntaxError("Misplaced comma in function arguments", token.position);
                 }
+                // Increment argument count for the function on top of stack
+                // Find the function by searching backwards
+                for (int j = static_cast<int>(operatorStack.size()) - 1; j >= 0; --j) {
+                    if (operatorStack[static_cast<size_t>(j)].type == TokenType::FUNCTION) {
+                        operatorStack[static_cast<size_t>(j)].argCount++;
+                        break;
+                    }
+                }
                 break;
 
-            case TokenType::OPERATOR: {
+            case TokenType::OPERATOR:
                 // Check if this should be treated as a unary operator
                 if (isUnaryOperator(tokens, i)) {
                     Token unaryOp(token);
                     unaryOp.value = "u" + token.value;  // Mark as unary (e.g., "u+", "u-")
-                    operatorStack.push(unaryOp);
+                    operatorStack.push_back(unaryOp);
                 } else {
                     // Binary operator
+                    // First, pop any FUNCTION tokens to output (they behave like operands)
+                    // This handles cases like "PI/2" where PI is a zero-arg function
                     while (!operatorStack.empty() &&
-                           operatorStack.top().type == TokenType::OPERATOR) {
-                        const Token& top = operatorStack.top();
+                           operatorStack.back().type == TokenType::FUNCTION) {
+                        output.push_back(operatorStack.back());
+                        operatorStack.pop_back();
+                    }
+                    // Then pop operators with higher or equal precedence
+                    while (!operatorStack.empty() &&
+                           operatorStack.back().type == TokenType::OPERATOR) {
+                        top = &operatorStack.back();
 
-                        if ((!isRightAssociative(token) && getPrecedence(token) <= getPrecedence(top)) ||
-                            (isRightAssociative(token) && getPrecedence(token) < getPrecedence(top))) {
-                            output.push_back(top);
-                            operatorStack.pop();
+                        if ((!isRightAssociative(token) && getPrecedence(token) <= getPrecedence(*top)) ||
+                            (isRightAssociative(token) && getPrecedence(token) < getPrecedence(*top))) {
+                            output.push_back(*top);
+                            operatorStack.pop_back();
                         } else {
                             break;
                         }
                     }
-                    operatorStack.push(token);
+                    operatorStack.push_back(token);
                 }
                 break;
-            }
 
             case TokenType::LPAREN:
-                operatorStack.push(token);
+                operatorStack.push_back(token);
                 break;
 
             case TokenType::RPAREN:
                 // Pop operators until we hit a left parenthesis
-                while (!operatorStack.empty() && operatorStack.top().type != TokenType::LPAREN) {
-                    output.push_back(operatorStack.top());
-                    operatorStack.pop();
+                while (!operatorStack.empty() && operatorStack.back().type != TokenType::LPAREN) {
+                    output.push_back(operatorStack.back());
+                    operatorStack.pop_back();
                 }
 
                 if (operatorStack.empty()) {
@@ -228,24 +300,26 @@ std::vector<Token> ShuntingYardParser::toPostfix(const std::vector<Token>& token
                 }
 
                 // Pop left parenthesis
-                operatorStack.pop();
+                operatorStack.pop_back();
 
-                // If top of stack is a function, pop it to output
-                if (!operatorStack.empty() && operatorStack.top().type == TokenType::FUNCTION) {
-                    output.push_back(operatorStack.top());
-                    operatorStack.pop();
+                // If top of stack is a function, pop it to output with argCount
+                if (!operatorStack.empty() && operatorStack.back().type == TokenType::FUNCTION) {
+                    // argCount represents the number of commas, so actual args = argCount + 1
+                    operatorStack.back().argCount++;
+                    output.push_back(operatorStack.back());
+                    operatorStack.pop_back();
                 }
                 break;
 
             case TokenType::EOF_TOKEN:
                 // End of input: pop remaining operators
                 while (!operatorStack.empty()) {
-                    const Token& top = operatorStack.top();
-                    if (top.type == TokenType::LPAREN) {
-                        throw SyntaxError("Unbalanced parentheses: missing closing ')'", top.position);
+                    top = &operatorStack.back();
+                    if (top->type == TokenType::LPAREN) {
+                        throw SyntaxError("Unbalanced parentheses: missing closing ')'", top->position);
                     }
-                    output.push_back(top);
-                    operatorStack.pop();
+                    output.push_back(*top);
+                    operatorStack.pop_back();
                 }
                 break;
 
@@ -289,15 +363,14 @@ std::unique_ptr<ASTNode> ShuntingYardParser::buildAST(const std::vector<Token>& 
 
             case TokenType::FUNCTION: {
                 // Pop operands for function arguments
-                // We need to determine how many arguments the function has
-                // For now, we'll pop one operand (single-argument functions like sin, cos)
-                if (operandStack.empty()) {
+                // Use the argCount stored in the token
+                // Use the tracked argument count (stored during toPostfix)
+                size_t argCount = token.argCount;
+
+                // For zero-argument functions (like PI, E), the operand stack can be empty
+                if (argCount > 0 && operandStack.empty()) {
                     throw SyntaxError("Missing arguments for function: " + token.value, token.position);
                 }
-
-                // For simplicity, assume single argument functions
-                // In future, we can add argument count tracking
-                size_t argCount = 1;
 
                 auto args = buildFunctionCall(token.value, token.position, argCount, operandStack);
                 operandStack.push(std::move(args));

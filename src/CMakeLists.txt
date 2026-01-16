@@ -12,7 +12,8 @@ set(CORE_SOURCES
     core/ast/binary_op_node.cpp
     core/ast/unary_op_node.cpp
     core/ast/function_call_node.cpp
-    # core/evaluator/evaluator.cpp
+    core/evaluator/evaluator.cpp
+    core/evaluator/evaluator_visitor.cpp
 )
 
 set(MODES_SOURCES

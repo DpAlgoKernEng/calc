@@ -162,6 +162,12 @@ private:
     std::unique_ptr<ASTNode> parsePower();
 
     /**
+     * @brief Parse the right side of a power operator
+     * Helper method that allows unary operators after '^'
+     */
+    std::unique_ptr<ASTNode> parsePowerRightSide();
+
+    /**
      * @brief Parse a unary operation
      * unary ::= ('+' | '-') unary | postfix
      */

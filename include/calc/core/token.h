@@ -39,6 +39,7 @@ struct Token {
     TokenType type;      ///< The type of this token
     std::string value;   ///< The string value of this token
     size_t position;     ///< Starting position in original input string
+    size_t argCount;     ///< Number of arguments for function tokens (default 0)
 
     /**
      * @brief Construct a default token

@@ -161,12 +161,43 @@ std::unique_ptr<ASTNode> RecursiveDescentParser::parsePower() {
     if (match(TokenType::OPERATOR) && peek().value == "^") {
         Token op = peek();
         advance();
-        // Recursively parse the right side (right-associative)
-        auto right = parsePower();
+        // For the right side of '^', we need to allow unary operators
+        // But we can't directly call parsePower() recursively because that would
+        // go through parseFactor() -> parseUnary() -> parsePower() and miss unary support
+        // Solution: Parse the right side starting from the lowest precedence that
+        // allows unary operators, which is parseUnary()
+        auto right = parsePowerRightSide();
         return std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
     }
 
     return left;
+}
+
+// Helper method to parse the right side of '^' operator
+// This allows unary operators and maintains right-associativity
+// For 2^3^4, this returns PowerNode(3, 4), and for 2^-2, this returns UnaryOpNode(-, 2)
+std::unique_ptr<ASTNode> RecursiveDescentParser::parsePowerRightSide() {
+    // Check for unary + or - (same as in parseUnary)
+    if (enableUnaryOperators_ &&
+        match(TokenType::OPERATOR) && (peek().value == "+" || peek().value == "-")) {
+        Token op = peek();
+        advance();
+        auto operand = parseUnary();
+        return std::make_unique<UnaryOpNode>(op, std::move(operand));
+    }
+
+    // Parse postfix (which handles numbers, parentheses, functions)
+    auto node = parsePostfix();
+
+    // Check for another '^' to maintain right-associativity
+    if (match(TokenType::OPERATOR) && peek().value == "^") {
+        Token op = peek();
+        advance();
+        auto right = parsePowerRightSide();
+        return std::make_unique<BinaryOpNode>(std::move(node), op, std::move(right));
+    }
+
+    return node;
 }
 
 // postfix ::= primary ( '(' arguments? ')' )?
