@@ -18,8 +18,8 @@ set(CORE_SOURCES
 
 set(MODES_SOURCES
     modes/standard_mode.cpp
+    modes/scientific_mode.cpp
     modes/mode_manager.cpp
-    # modes/scientific_mode.cpp
     # modes/programmer_mode.cpp
 )
 

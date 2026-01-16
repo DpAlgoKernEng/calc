@@ -5,6 +5,7 @@
 
 #include "calc/modes/mode_manager.h"
 #include "calc/modes/standard_mode.h"
+#include "calc/modes/scientific_mode.h"
 #include <algorithm>
 
 namespace calc {
@@ -14,6 +15,10 @@ ModeManager::ModeManager()
     // Register StandardMode as the default
     auto standardMode = std::make_unique<StandardMode>();
     registerMode(std::move(standardMode));
+
+    // Register ScientificMode
+    auto scientificMode = std::make_unique<ScientificMode>();
+    registerMode(std::move(scientificMode));
 }
 
 bool ModeManager::registerMode(std::unique_ptr<Mode> mode) {

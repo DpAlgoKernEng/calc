@@ -249,7 +249,7 @@ TEST_F(StandardModeTest, BothParsersGiveSameResult) {
 TEST_F(StandardModeTest, ModeManagerRegistration) {
     ModeManager manager;
     EXPECT_TRUE(manager.hasMode("standard"));
-    EXPECT_EQ(manager.getModeCount(), 1);
+    EXPECT_EQ(manager.getModeCount(), 2);  // standard + scientific
 }
 
 TEST_F(StandardModeTest, ModeManagerGetDefault) {

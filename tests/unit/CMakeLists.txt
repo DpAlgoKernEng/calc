@@ -13,6 +13,7 @@ set(UNIT_TEST_SOURCES
     recursive_descent_parser_test.cpp
     evaluator_test.cpp
     modes/standard_mode_test.cpp
+    modes/scientific_mode_test.cpp
 )
 
 # Create unit test executable

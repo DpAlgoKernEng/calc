@@ -7,7 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(INTEGRATION_TEST_SOURCES
     evaluator_integration_test.cpp
     standard_mode_integration_test.cpp
-    # scientific_mode_test.cpp
+    scientific_mode_integration_test.cpp
     # programmer_mode_test.cpp
 )
 
