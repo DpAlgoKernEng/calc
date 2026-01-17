@@ -8,6 +8,7 @@
 #include "calc/modes/standard_mode.h"
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 
 namespace calc {
 namespace cli {
@@ -178,10 +179,10 @@ bool CliApp::evaluateREPLExpression(REPLState& state, const std::string& line, c
 
 void CliApp::printBanner() {
     std::cout << std::endl;
-    std::cout << "╔══════════════════════════════════════════╗" << std::endl;
-    std::cout << "║        Calc - Cross-platform Calculator       ║" << std::endl;
-    std::cout << "║                 Version 1.0.0                ║" << std::endl;
-    std::cout << "╚══════════════════════════════════════════╝" << std::endl;
+    std::cout << "+------------------------------------------+" << std::endl;
+    std::cout << "|        Calc - Cross-platform Calculator  |" << std::endl;
+    std::cout << "|                 Version 1.0.0           |" << std::endl;
+    std::cout << "+------------------------------------------+" << std::endl;
     std::cout << std::endl;
     std::cout << "Type expressions to evaluate, or type 'help' for available commands." << std::endl;
     std::cout << "Press Ctrl+C or type 'quit' to exit." << std::endl;
