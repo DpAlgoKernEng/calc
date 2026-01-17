@@ -26,6 +26,13 @@ target_link_libraries(calc_integration_tests
         calc_ui
 )
 
+# Set output directory for test executable
+set_target_properties(calc_integration_tests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/integration/$<CONFIG>"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/tests/integration/Debug"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/tests/integration/Release"
+)
+
 # Create alias for tests executable
 add_executable(calc::integration_tests ALIAS calc_integration_tests)
 

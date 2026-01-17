@@ -37,6 +37,13 @@ target_link_libraries(calc_unit_tests
         calc_ui
 )
 
+# Set output directory for test executable
+set_target_properties(calc_unit_tests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/unit/$<CONFIG>"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/tests/unit/Debug"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/tests/unit/Release"
+)
+
 # Create alias for tests executable
 add_executable(calc::unit_tests ALIAS calc_unit_tests)
 
