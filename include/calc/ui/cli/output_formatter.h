@@ -7,6 +7,7 @@
 #define CALC_UI_CLI_OUTPUT_FORMATTER_H
 
 #include "calc/core/evaluator.h"
+#include "calc/ui/cli/command_parser.h"
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -24,10 +25,13 @@ class OutputFormatter {
 public:
     /**
      * @brief Construct an output formatter
-     * @param useColor Enable colored output if supported (default: true)
+     * @param colorMode Color output mode (default: AUTO)
      * @param showExpression Show the original expression in output (default: true)
+     * @param enableSyntaxHighlight Enable syntax highlighting (default: true)
      */
-    explicit OutputFormatter(bool useColor = true, bool showExpression = true);
+    explicit OutputFormatter(ColorMode colorMode = ColorMode::AUTO,
+                          bool showExpression = true,
+                          bool enableSyntaxHighlight = true);
 
     /**
      * @brief Destructor
@@ -67,16 +71,22 @@ public:
     /**
      * @brief Format a separator line
      * @param length Length of the separator (default: 40)
-     * @param ch Character to use (default: '-')
+     * @param character Character to use (default: '-')
      * @return Formatted separator
      */
-    std::string formatSeparator(size_t length = 40, char ch = '-');
+    std::string formatSeparator(size_t length = 40, char character = '-');
 
     /**
      * @brief Enable or disable colored output
      * @param enabled Whether to enable colors
      */
     void setUseColor(bool enabled);
+
+    /**
+     * @brief Set color mode
+     * @param mode Color mode to use
+     */
+    void setColorMode(ColorMode mode);
 
     /**
      * @brief Check if colored output is enabled
@@ -96,9 +106,41 @@ public:
      */
     bool isExpressionShown() const;
 
+    /**
+     * @brief Enable or disable syntax highlighting
+     * @param enabled Whether to enable syntax highlighting
+     */
+    void setSyntaxHighlight(bool enabled);
+
+    /**
+     * @brief Check if syntax highlighting is enabled
+     * @return true if syntax highlighting is enabled
+     */
+    bool isSyntaxHighlightEnabled() const;
+
 private:
+    ColorMode colorMode_;
     bool useColor_;
     bool showExpression_;
+    bool syntaxHighlight_;
+
+    /**
+     * @brief Detect if terminal supports colors
+     * @return true if colors are supported
+     */
+    static bool isTerminalColorSupported();
+
+    /**
+     * @brief Update color state based on mode and terminal
+     */
+    void updateColorState();
+
+    /**
+     * @brief Apply syntax highlighting to an expression
+     * @param expression The expression to highlight
+     * @return Highlighted expression
+     */
+    std::string applySyntaxHighlight(const std::string& expression);
 
     /**
      * @brief Add ANSI color codes to text

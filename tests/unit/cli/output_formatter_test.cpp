@@ -4,6 +4,7 @@
  */
 
 #include "calc/ui/cli/output_formatter.h"
+#include "calc/ui/cli/command_parser.h"
 #include "calc/core/evaluator.h"
 #include <gtest/gtest.h>
 #include <limits>
@@ -26,27 +27,34 @@ protected:
 TEST_F(OutputFormatterTest, Constructor_DefaultValues) {
     OutputFormatter formatter;
 
+    EXPECT_TRUE(formatter.isSyntaxHighlightEnabled());
+    EXPECT_TRUE(formatter.isExpressionShown());
+}
+
+TEST_F(OutputFormatterTest, Constructor_ColorModeAlways) {
+    OutputFormatter formatter(ColorMode::ALWAYS, true);
+
     EXPECT_TRUE(formatter.isColorEnabled());
     EXPECT_TRUE(formatter.isExpressionShown());
 }
 
-TEST_F(OutputFormatterTest, Constructor_DisableColor) {
-    OutputFormatter formatter(false, true);
+TEST_F(OutputFormatterTest, Constructor_ColorModeNever) {
+    OutputFormatter formatter(ColorMode::NEVER, true);
 
     EXPECT_FALSE(formatter.isColorEnabled());
     EXPECT_TRUE(formatter.isExpressionShown());
 }
 
 TEST_F(OutputFormatterTest, Constructor_DisableExpression) {
-    OutputFormatter formatter(true, false);
+    OutputFormatter formatter(ColorMode::AUTO, false);
 
-    EXPECT_TRUE(formatter.isColorEnabled());
+    EXPECT_TRUE(formatter.isSyntaxHighlightEnabled());
     EXPECT_FALSE(formatter.isExpressionShown());
 }
 
 // Setter/Getter tests
 TEST_F(OutputFormatterTest, SetUseColor_UpdatesState) {
-    OutputFormatter formatter;
+    OutputFormatter formatter(ColorMode::ALWAYS);
 
     formatter.setUseColor(false);
     EXPECT_FALSE(formatter.isColorEnabled());
@@ -55,8 +63,31 @@ TEST_F(OutputFormatterTest, SetUseColor_UpdatesState) {
     EXPECT_TRUE(formatter.isColorEnabled());
 }
 
+TEST_F(OutputFormatterTest, SetColorMode_UpdatesState) {
+    OutputFormatter formatter(ColorMode::NEVER);
+    EXPECT_FALSE(formatter.isColorEnabled());
+
+    formatter.setColorMode(ColorMode::ALWAYS);
+    EXPECT_TRUE(formatter.isColorEnabled());
+
+    formatter.setColorMode(ColorMode::NEVER);
+    EXPECT_FALSE(formatter.isColorEnabled());
+}
+
+TEST_F(OutputFormatterTest, SetSyntaxHighlight_UpdatesState) {
+    OutputFormatter formatter(ColorMode::AUTO);
+
+    EXPECT_TRUE(formatter.isSyntaxHighlightEnabled());
+
+    formatter.setSyntaxHighlight(false);
+    EXPECT_FALSE(formatter.isSyntaxHighlightEnabled());
+
+    formatter.setSyntaxHighlight(true);
+    EXPECT_TRUE(formatter.isSyntaxHighlightEnabled());
+}
+
 TEST_F(OutputFormatterTest, SetShowExpression_UpdatesState) {
-    OutputFormatter formatter;
+    OutputFormatter formatter(ColorMode::AUTO);
 
     formatter.setShowExpression(false);
     EXPECT_FALSE(formatter.isExpressionShown());
@@ -67,7 +98,7 @@ TEST_F(OutputFormatterTest, SetShowExpression_UpdatesState) {
 
 // FormatResult tests
 TEST_F(OutputFormatterTest, FormatResult_Success_ContainsValue) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(42.0);
 
     std::string output = formatter.formatResult(result);
@@ -78,7 +109,7 @@ TEST_F(OutputFormatterTest, FormatResult_Success_ContainsValue) {
 }
 
 TEST_F(OutputFormatterTest, FormatResult_SuccessWithExpression_ContainsBoth) {
-    OutputFormatter formatter(false, true);
+    OutputFormatter formatter(ColorMode::NEVER, true);
     auto result = createSuccessResult(6.0);
 
     std::string output = formatter.formatResult("2 * 3", result);
@@ -90,7 +121,7 @@ TEST_F(OutputFormatterTest, FormatResult_SuccessWithExpression_ContainsBoth) {
 }
 
 TEST_F(OutputFormatterTest, FormatResult_IntegerValue_NoDecimal) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(5.0);
 
     std::string output = formatter.formatResult(result);
@@ -101,7 +132,7 @@ TEST_F(OutputFormatterTest, FormatResult_IntegerValue_NoDecimal) {
 }
 
 TEST_F(OutputFormatterTest, FormatResult_DecimalValue_HasPrecision) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(3.14159);
 
     std::string output = formatter.formatResult(result);
@@ -112,7 +143,7 @@ TEST_F(OutputFormatterTest, FormatResult_DecimalValue_HasPrecision) {
 }
 
 TEST_F(OutputFormatterTest, FormatResult_NegativeValue_ContainsMinus) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(-42.0);
 
     std::string output = formatter.formatResult(result);
@@ -123,7 +154,7 @@ TEST_F(OutputFormatterTest, FormatResult_NegativeValue_ContainsMinus) {
 
 // FormatError tests
 TEST_F(OutputFormatterTest, FormatError_ContainsMessage) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createErrorResult(ErrorCode::DIVISION_BY_ZERO, "Cannot divide by zero");
 
     std::string output = formatter.formatError("1 / 0", result);
@@ -133,7 +164,7 @@ TEST_F(OutputFormatterTest, FormatError_ContainsMessage) {
 }
 
 TEST_F(OutputFormatterTest, FormatError_WithPosition_ContainsPosition) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createErrorResult(ErrorCode::INVALID_SYNTAX, "Invalid syntax", 5);
 
     std::string output = formatter.formatError("1 + + 2", result);
@@ -143,7 +174,7 @@ TEST_F(OutputFormatterTest, FormatError_WithPosition_ContainsPosition) {
 }
 
 TEST_F(OutputFormatterTest, FormatError_NoPosition_NoPositionText) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createErrorResult(ErrorCode::INVALID_SYNTAX, "Invalid syntax", 0);
 
     std::string output = formatter.formatError("bad", result);
@@ -152,7 +183,7 @@ TEST_F(OutputFormatterTest, FormatError_NoPosition_NoPositionText) {
 }
 
 TEST_F(OutputFormatterTest, FormatError_WithExpression_ContainsExpression) {
-    OutputFormatter formatter(false, true);
+    OutputFormatter formatter(ColorMode::NEVER, true);
     auto result = createErrorResult(ErrorCode::INVALID_FUNCTION, "Unknown function", 3);
 
     std::string output = formatter.formatError("foo(5)", result);
@@ -164,7 +195,7 @@ TEST_F(OutputFormatterTest, FormatError_WithExpression_ContainsExpression) {
 
 // FormatExpression tests
 TEST_F(OutputFormatterTest, FormatExpression_ContainsExpression) {
-    OutputFormatter formatter(false);
+    OutputFormatter formatter(ColorMode::NEVER);
     std::string output = formatter.formatExpression("2 + 3 * 4");
 
     EXPECT_TRUE(output.find("2 + 3 * 4") != std::string::npos);
@@ -172,7 +203,7 @@ TEST_F(OutputFormatterTest, FormatExpression_ContainsExpression) {
 }
 
 TEST_F(OutputFormatterTest, FormatExpression_Empty_ReturnsEmptyPrefix) {
-    OutputFormatter formatter(false);
+    OutputFormatter formatter(ColorMode::NEVER);
     std::string output = formatter.formatExpression("");
 
     EXPECT_TRUE(output.find("Expression:") != std::string::npos);
@@ -180,7 +211,7 @@ TEST_F(OutputFormatterTest, FormatExpression_Empty_ReturnsEmptyPrefix) {
 
 // FormatSeparator tests
 TEST_F(OutputFormatterTest, FormatSeparator_DefaultLength40_Returns40Dashes) {
-    OutputFormatter formatter(false);
+    OutputFormatter formatter(ColorMode::NEVER);
     std::string sep = formatter.formatSeparator();
 
     EXPECT_EQ(sep.size(), 40);
@@ -188,7 +219,7 @@ TEST_F(OutputFormatterTest, FormatSeparator_DefaultLength40_Returns40Dashes) {
 }
 
 TEST_F(OutputFormatterTest, FormatSeparator_CustomLength_ReturnsCustomDashes) {
-    OutputFormatter formatter(false);
+    OutputFormatter formatter(ColorMode::NEVER);
     std::string sep = formatter.formatSeparator(20);
 
     EXPECT_EQ(sep.size(), 20);
@@ -196,7 +227,7 @@ TEST_F(OutputFormatterTest, FormatSeparator_CustomLength_ReturnsCustomDashes) {
 }
 
 TEST_F(OutputFormatterTest, FormatSeparator_CustomCharacter_ReturnsCustomChar) {
-    OutputFormatter formatter(false);
+    OutputFormatter formatter(ColorMode::NEVER);
     std::string sep = formatter.formatSeparator(10, '*');
 
     EXPECT_EQ(sep.size(), 10);
@@ -205,7 +236,7 @@ TEST_F(OutputFormatterTest, FormatSeparator_CustomCharacter_ReturnsCustomChar) {
 
 // Color tests (with colors enabled)
 TEST_F(OutputFormatterTest, FormatResult_WithColor_ContainsAnsiCodes) {
-    OutputFormatter formatter(true, false);
+    OutputFormatter formatter(ColorMode::ALWAYS, false);
     auto result = createSuccessResult(42.0);
 
     std::string output = formatter.formatResult(result);
@@ -215,7 +246,7 @@ TEST_F(OutputFormatterTest, FormatResult_WithColor_ContainsAnsiCodes) {
 }
 
 TEST_F(OutputFormatterTest, FormatResult_WithoutColor_NoAnsiCodes) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(42.0);
 
     std::string output = formatter.formatResult(result);
@@ -226,7 +257,7 @@ TEST_F(OutputFormatterTest, FormatResult_WithoutColor_NoAnsiCodes) {
 
 // Special value tests
 TEST_F(OutputFormatterTest, FormatResult_Infinity_HandlesPositiveInfinity) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(std::numeric_limits<double>::infinity());
 
     std::string output = formatter.formatResult(result);
@@ -235,7 +266,7 @@ TEST_F(OutputFormatterTest, FormatResult_Infinity_HandlesPositiveInfinity) {
 }
 
 TEST_F(OutputFormatterTest, FormatResult_NegativeInfinity_HandlesNegativeInfinity) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(-std::numeric_limits<double>::infinity());
 
     std::string output = formatter.formatResult(result);
@@ -244,7 +275,7 @@ TEST_F(OutputFormatterTest, FormatResult_NegativeInfinity_HandlesNegativeInfinit
 }
 
 TEST_F(OutputFormatterTest, FormatResult_NaN_HandlesNaN) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = createSuccessResult(std::numeric_limits<double>::quiet_NaN());
 
     std::string output = formatter.formatResult(result);

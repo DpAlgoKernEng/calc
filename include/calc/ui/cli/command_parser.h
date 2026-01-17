@@ -14,6 +14,15 @@ namespace calc {
 namespace cli {
 
 /**
+ * @brief Color output mode
+ */
+enum class ColorMode {
+    AUTO,    ///< Detect terminal capability
+    ALWAYS,  ///< Always use colors
+    NEVER    ///< Never use colors
+};
+
+/**
  * @brief Parsed command-line options
  */
 struct CommandLineOptions {
@@ -24,6 +33,7 @@ struct CommandLineOptions {
     bool showVersion = false;                 ///< Show version information
     bool useRecursiveDescent = false;          ///< Use recursive descent parser
     bool interactive = false;                  ///< Interactive mode
+    ColorMode colorMode = ColorMode::AUTO;    ///< Color output mode
     std::vector<std::string> expressions;     ///< Multiple expressions to evaluate
 };
 

@@ -36,6 +36,8 @@ std::string CommandParser::getHelpMessage() {
         << "  -p, --precision <num>   Set output precision (default: 6)\n"
         << "  -r, --recursive         Use recursive descent parser\n"
         << "  -i, --interactive      Run in interactive (REPL) mode\n"
+        << "  --color[=MODE]         Enable colored output\n"
+        << "                          MODE: auto (default), always, never\n"
         << "\n"
         << "Standard Mode Operations:\n"
         << "  +  -  *  /  ^          Basic arithmetic operations\n"
@@ -47,6 +49,7 @@ std::string CommandParser::getHelpMessage() {
         << "  calc -p 2 \"sqrt(16) + 2\"\n"
         << "  calc -i\n"
         << "  calc -m standard \"(2 + 3) * 4\"\n"
+        << "  calc --color=always \"sin(PI/2)\"\n"
         << "\n"
         << "For more information, visit: https://github.com/yourusername/calc";
     return oss.str();
@@ -99,6 +102,26 @@ CommandLineOptions CommandParser::parse() {
         }
         else if (arg == "-i" || arg == "--interactive") {
             options.interactive = true;
+        }
+        else if (arg == "--color") {
+            options.colorMode = ColorMode::ALWAYS;
+        }
+        else if (arg == "--no-color") {
+            options.colorMode = ColorMode::NEVER;
+        }
+        else if (arg.find("--color=") == 0) {
+            std::string mode = arg.substr(8);  // Skip "--color="
+            if (mode == "auto") {
+                options.colorMode = ColorMode::AUTO;
+            } else if (mode == "always" || mode == "yes" || mode == "1") {
+                options.colorMode = ColorMode::ALWAYS;
+            } else if (mode == "never" || mode == "no" || mode == "0") {
+                options.colorMode = ColorMode::NEVER;
+            } else {
+                std::cerr << "Error: Invalid color mode: " << mode << "\n";
+                std::cerr << "Valid values: auto, always, never\n";
+                options.showHelp = true;
+            }
         }
         else if (arg.empty() || arg[0] != '-') {
             // Not an option, treat as expression

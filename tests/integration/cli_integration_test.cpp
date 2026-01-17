@@ -7,6 +7,7 @@
 #include "calc/ui/cli/command_parser.h"
 #include "calc/ui/cli/output_formatter.h"
 #include "calc/ui/cli/history_manager.h"
+#include "calc/core/evaluator.h"
 #include <gtest/gtest.h>
 #include <sstream>
 #include <filesystem>
@@ -156,7 +157,7 @@ TEST_F(CLIIntegrationTest, HistoryManagerExpandReference_DoubleBangWorks) {
 
 // OutputFormatter + EvaluationResult integration
 TEST_F(CLIIntegrationTest, OutputFormatterWithSuccessResult_FormatsCorrectly) {
-    OutputFormatter formatter(false, true);
+    OutputFormatter formatter(ColorMode::NEVER, true);
     auto result = EvaluationResult(42.0);
 
     std::string output = formatter.formatResult("2*21", result);
@@ -168,7 +169,7 @@ TEST_F(CLIIntegrationTest, OutputFormatterWithSuccessResult_FormatsCorrectly) {
 }
 
 TEST_F(CLIIntegrationTest, OutputFormatterWithErrorResult_FormatsCorrectly) {
-    OutputFormatter formatter(false, true);
+    OutputFormatter formatter(ColorMode::NEVER, true);
     auto result = EvaluationResult(
         ErrorCode::DIVISION_BY_ZERO,
         "Cannot divide by zero",
@@ -221,7 +222,7 @@ TEST_F(CLIIntegrationTest, CommandParserVersion_GeneratesValidVersion) {
 
 // Color output integration
 TEST_F(CLIIntegrationTest, OutputFormatter_WithColor_ContainsAnsiCodes) {
-    OutputFormatter formatter(true, false);
+    OutputFormatter formatter(ColorMode::ALWAYS, false);
     auto result = EvaluationResult(42.0);
 
     std::string output = formatter.formatResult(result);
@@ -231,7 +232,7 @@ TEST_F(CLIIntegrationTest, OutputFormatter_WithColor_ContainsAnsiCodes) {
 }
 
 TEST_F(CLIIntegrationTest, OutputFormatter_WithoutColor_NoAnsiCodes) {
-    OutputFormatter formatter(false, false);
+    OutputFormatter formatter(ColorMode::NEVER, false);
     auto result = EvaluationResult(42.0);
 
     std::string output = formatter.formatResult(result);

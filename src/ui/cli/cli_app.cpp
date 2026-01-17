@@ -4,6 +4,7 @@
  */
 
 #include "calc/ui/cli/cli_app.h"
+#include "calc/ui/cli/command_parser.h"
 #include "calc/modes/standard_mode.h"
 #include <iostream>
 #include <algorithm>
@@ -14,7 +15,7 @@ namespace cli {
 CliApp::CliApp(int argc, char* argv[])
     : argc_(argc)
     , argv_(argv)
-    , formatter_(false, true)  // Disable colors by default, show expression
+    , formatter_(ColorMode::AUTO, true, true)  // Auto color, show expression, enable syntax highlight
     , currentMode_(nullptr) {
 }
 
@@ -55,6 +56,9 @@ int CliApp::run() {
 }
 
 int CliApp::processOptions(const CommandLineOptions& options) {
+    // Apply color settings
+    formatter_.setColorMode(options.colorMode);
+
     // Get the mode
     currentMode_ = modeManager_.getMode(options.mode);
     if (currentMode_ == nullptr) {
