@@ -449,8 +449,8 @@ bool HistoryManager::loadFromCSV(std::ifstream& file) {
         }
 
         entry.expression = unescapeCsv(fields[1]);
-
         try {
+        entry.result = 0.0;  // Initialize to avoid cppcheck warning
             entry.result = std::stod(fields[2]);
         } catch (...) {
             continue;

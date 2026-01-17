@@ -1,0 +1,115 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  code-formatting:
+    name: Code Formatting Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
+
+    - name: Check code formatting
+      run: |
+        ./scripts/check-format.sh
+
+  clang-tidy:
+    name: clang-tidy Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup clang-tidy
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-tidy
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build project
+      run: |
+        cmake --build build --config Debug
+
+    - name: Run clang-tidy
+      run: |
+        ./scripts/run-clang-tidy.sh --warnings-as-errors
+
+  cppcheck:
+    name: cppcheck Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup cppcheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck
+
+    - name: Run cppcheck
+      run: |
+        ./scripts/run-cppcheck.sh --enable-all --warning-as-error
+
+  valgrind:
+    name: Memory Leak Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup valgrind
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y valgrind
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build project
+      run: |
+        cmake --build build --config Debug
+
+    - name: Run valgrind on tests
+      run: |
+        ./scripts/valgrind.sh --leak-check=full
+
+  compile-warnings:
+    name: Compile Warnings Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure CMake (warnings as errors)
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON \
+          -DWERROR=ON
+
+    - name: Build with warnings as errors
+      run: |
+        cmake --build build --config Debug

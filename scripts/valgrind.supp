@@ -1,0 +1,216 @@
+# Valgrind suppression file for calc project
+# Suppressions for common false positives and third-party libraries
+
+{
+    # glibc pthread initialization
+    pthread_create_cond
+    Memcheck:Cond
+    fun:pthread_cond_init*
+    ...
+}
+
+{
+    # glibc pthread initialization
+    pthread_create_mutex
+    Memcheck:Cond
+    fun:pthread_mutex_init*
+    ...
+}
+
+{
+    # glibc dlopen
+    dl_open
+    Memcheck:Param
+    dl_open:filename->char*
+    ...
+}
+
+{
+    # glibc getaddrinfo
+    getaddrinfo
+    Memcheck:Leak
+    fun:*
+    fun:getaddrinfo*
+    ...
+}
+
+{
+    # Google Test allocations
+    gtest_leak
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:*GoogleTest*
+    ...
+}
+
+{
+    # Google Mock allocations
+    gmock_leak
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:*GoogleMock*
+    ...
+}
+
+{
+    # C++ locale allocations
+    std_locale
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:std::locale*
+}
+
+{
+    # C++ streambuf allocations
+    std_streambuf
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:std::basic_streambuf*
+}
+
+{
+    # std::ios_base::Init
+    std_ios_base_init
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:std::ios_base::Init*
+}
+
+{
+    # Suppress false positives from std::shared_ptr (weak references)
+    shared_ptr_weak
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:*shared_ptr*
+}
+
+{
+    # Suppress false positives from std::function
+    std_function
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:*function*
+}
+
+{
+    # Suppress false positives from std::string (small string optimization)
+    std_string_sso
+    Memcheck:Leak
+    fun:malloc
+    obj:*
+    fun:*basic_string*
+}
+
+{
+    # Suppress false positives from std::vector (capacity growth)
+    std_vector_growth
+    Memcheck:Leak
+    fun:malloc
+    obj:*
+    fun:*basic_vector*
+}
+
+{
+    # Suppress false positives from std::map
+    std_map_node
+    Memcheck:Leak
+    fun:malloc
+    obj:*
+    fun:*basic_map*
+}
+
+{
+    # Suppress false positives from std::unordered_map
+    std_unordered_map
+    Memcheck:Leak
+    fun:malloc
+    obj:*
+    fun:*unordered_map*
+}
+
+{
+    # GCC libstdc++ internal allocations
+    libstdcxx_internal
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:__cxa_*_*
+}
+
+{
+    # Clang libc++ internal allocations
+    libcxx_internal
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:*libc++*
+}
+
+{
+    # Suppress false positives from static initialization
+    static_init
+    Memcheck:Leak
+    fun:malloc
+    ...
+    obj:*
+    fun:_GLOBAL__sub_I*
+}
+
+{
+    # Suppress false positives from atexit registrations
+    atexit_registration
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:__cxa_atexit*
+}
+
+{
+    # Suppress false positives from thread local storage
+    tls_allocation
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:*tls*
+}
+
+{
+    # Suppress false positives from exceptions
+    exception_allocation
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:*exception*
+}
+
+{
+    # Suppress false positives from type_info
+    type_info
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:*type_info*
+}
+
+{
+    # Suppress false positives from vtable
+    vtable_allocation
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:*vtable*
+}

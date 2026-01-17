@@ -36,6 +36,8 @@ set(UTILS_SOURCES
 # Create core library
 add_library(calc_core ${CORE_SOURCES})
 target_include_directories(calc_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
+# Link calc_utils for exception definitions used in core
+target_link_libraries(calc_core PUBLIC calc_utils)
 
 # Create math library
 add_library(calc_math ${MATH_SOURCES})

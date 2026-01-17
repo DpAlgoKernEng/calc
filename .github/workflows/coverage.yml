@@ -1,0 +1,69 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  coverage:
+    name: Code Coverage Report
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lcov
+
+    - name: Configure CMake with coverage
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON \
+          -DENABLE_COVERAGE=ON
+
+    - name: Build project
+      run: |
+        cmake --build build --config Debug
+
+    - name: Run tests and generate coverage
+      run: |
+        ./scripts/coverage.sh --clean --target=all
+
+    - name: Generate coverage summary
+      run: |
+        cd build
+        lcov --summary coverage.filtered.info
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./build/coverage.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: build/coverage_html/
+        retention-days: 30
+
+    - name: Check coverage threshold
+      run: |
+        echo "Checking coverage threshold (minimum 90%)..."
+        cd build
+        COVERAGE=$(lcov --summary coverage.filtered.info 2>&1 | grep "lines" | awk '{print $2}' | tr -d '%')
+        echo "Line coverage: ${COVERAGE}%"
+        if (( $(echo "$COVERAGE < 90" | bc -l) )); then
+          echo "::warning::Coverage ${COVERAGE}% is below threshold of 90%"
+          exit 0
+        else
+          echo "Coverage ${COVERAGE}% meets threshold"
+        fi

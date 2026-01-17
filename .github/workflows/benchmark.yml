@@ -1,0 +1,67 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_TESTING=ON
+
+    - name: Build project with benchmarks
+      run: |
+        cmake --build build --config Release --target benchmarks
+
+    - name: Run tokenizer benchmarks
+      run: |
+        echo "=== Tokenizer Benchmarks ===" > benchmark_results.txt
+        ./build/tests/benchmark/tokenizer_benchmark >> benchmark_results.txt
+
+    - name: Run parser benchmarks
+      run: |
+        echo "=== Parser Benchmarks ===" >> benchmark_results.txt
+        ./build/tests/benchmark/parser_benchmark >> benchmark_results.txt
+
+    - name: Run evaluator benchmarks
+      run: |
+        echo "=== Evaluator Benchmarks ===" >> benchmark_results.txt
+        ./build/tests/benchmark/evaluator_benchmark >> benchmark_results.txt
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: benchmark_results.txt
+        retention-days: 90
+
+    - name: Display benchmark summary
+      run: |
+        cat benchmark_results.txt
+
+    - name: Comment PR with benchmark results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const results = fs.readFileSync('benchmark_results.txt', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '## Performance Benchmark Results\n\n```\n' + results + '\n```'
+          });

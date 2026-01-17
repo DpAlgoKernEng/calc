@@ -12,6 +12,31 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Include compiler options
 include(cmake/CompileOptions.cmake)
 
+# Code coverage option
+option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+
+# Benchmark option
+option(ENABLE_BENCHMARK "Enable benchmark targets" OFF)
+
+# Warnings as errors option (for CI)
+option(WERROR "Treat warnings as errors" OFF)
+
+# Enable code coverage if requested
+if(ENABLE_COVERAGE)
+    message(STATUS "Code coverage enabled")
+    include(cmake/CodeCoverage.cmake)
+endif()
+
+# Treat warnings as errors if requested
+if(WERROR)
+    if(MSVC)
+        add_compile_options(/WX)
+    else()
+        add_compile_options(-Werror)
+    endif()
+    message(STATUS "Warnings treated as errors")
+endif()
+
 # Dependencies via FetchContent
 include(FetchContent)
 

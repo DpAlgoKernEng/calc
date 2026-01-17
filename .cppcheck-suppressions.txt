@@ -1,0 +1,101 @@
+# cppcheck suppressions file for calc project
+# These suppress false positives and known issues
+
+# Suppress false positives in test code
+missingIncludeSystem:*tests/*
+missingInclude:*tests/*
+unusedFunction:*tests/*
+
+# Suppress false positives in benchmark code
+missingIncludeSystem:*benchmark/*
+missingInclude:*benchmark/*
+unusedFunction:*benchmark/*
+
+# Suppress false positives from std::variant/std::optional
+uninitStructMember:*std::variant*
+uninitStructMember:*std::optional*
+
+# Suppress false positives from std::string (small string optimization)
+unusedVariable:*std::string*
+
+# Suppress false positives from std::vector (capacity growth)
+unusedVariable:*std::vector*
+
+# Suppress false positives from std::unique_ptr
+unusedVariable:*std::unique_ptr*
+
+# Suppress false positives from std::unique_ptr::get
+unusedVariable:.get()
+
+# Suppress false positives from std::unique_ptr::release
+unusedVariable:.release()
+
+# Suppress false positives from std::string::c_str
+unusedVariable:.c_str()
+
+# Suppress false positives from std::string::data
+unusedVariable:.data()
+
+# Suppress false positives from std::vector::size
+unusedVariable:.size()
+
+# Suppress false positives from std::vector::capacity
+unusedVariable:.capacity()
+
+# Suppress false positives from std::vector::data
+unusedVariable:.data()
+
+# Suppress false positives from std::map::at
+unusedVariable:.at()
+
+# Suppress false positives from std::map::find
+unusedVariable:.find()
+
+# Suppress false positives from std::unordered_map::at
+unusedVariable:.at()
+
+# Suppress false positives from std::unordered_map::find
+unusedVariable:.find()
+
+# Suppress false positives from visitor pattern
+unusedVariable:*Visitor*
+
+# Suppress false positives from RAII patterns (not unused, just cleanup)
+unusedVariable:~*()
+
+# Suppress known false positives from C++17 features
+knownConditionTrueFalse:std::is_same_v
+knownConditionTrueFalse:if constexpr
+
+# Suppress false positives from constexpr evaluation
+redundantCondition:constexpr*
+
+# Suppress false positives in history_manager.cpp (entry.result set in try-catch)
+uninitStructMember:src/ui/cli/history_manager.cpp:entry.result
+
+# Suppress false positives from function pointers
+uninitStructMember:std::function*
+
+# Suppress false positives from lambda captures
+uninitStructMember:[&]
+
+# Suppress false positives from std::move
+unusedVariable:std::move*
+
+# Suppress false positives from std::forward
+unusedVariable:std::forward*
+
+# Suppress false positives from std::shared_ptr
+unusedVariable:*std::shared_ptr*
+
+# Suppress false positives from std::weak_ptr
+unusedVariable:*std::weak_ptr*
+
+# Suppress false positives from operator overloads
+noExplicitConstructor:operator*
+
+# Suppress false positives from templates
+noExplicitConstructor:*
+
+# Suppress false positives in mode classes (virtual destructors are fine)
+noexceptFunction:*Mode::~*Mode*

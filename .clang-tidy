@@ -1,0 +1,85 @@
+# clang-tidy configuration for calc project
+
+# Inherit from default checks
+InheritParentConfig: false
+
+# Check options
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  cert-*,
+  -cert-dcl50-cpp,  # Allow throwing string literals for simplicity
+  -cert-err58-cpp,  # Allow throwing non-exception types in tests
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-magic-numbers,  # Allow magic numbers for math constants
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-vararg,  # Allow for gtest macros
+  -cppcoreguidelines-owning-memory,  # Not using owning pointers
+  -cppcoreguidelines-special-member-functions,  # Some classes don't need all members
+  modernize-*,
+  -modernize-use-trailing-return-type,  # Prefer leading return type
+  -modernize-avoid-c-arrays,  # Allow C arrays for simple cases
+  performance-*,
+  -performance-no-int-to-ptr,  # Allow for some low-level operations
+  portability-*,
+  readability-*,
+  -readability-magic-numbers,  # Allow magic numbers for math constants
+  -readability-identifier-length,  # Allow short names for local variables
+  -readability-function-cognitive-complexity,  # Complex algorithms may need this
+  misc-*,
+  -misc-non-private-member-variables-in-classes,  # Some classes use public members
+
+# Header filter - only check project headers
+HeaderFilterRegex: '.*'
+
+# Warning as errors in CI
+WarningsAsErrors: ''
+
+# Format style (use .clang-format)
+FormatStyle: file
+
+# System headers
+SystemHeaders: false
+
+# Check options
+CheckOptions:
+  # Modernize checks
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+
+  # Performance checks
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: ''
+
+  # Readability checks
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+
+  # CppCoreGuidelines checks
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: '1'
+
+# Extra arguments (compile commands)
+ExtraArgs: []
