@@ -48,4 +48,6 @@
 
 /out
 
-CMakeSettings.json
+/vcpkg_installed
+
+/vcpkg/vcpkg

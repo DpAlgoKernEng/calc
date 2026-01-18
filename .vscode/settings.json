@@ -1,30 +1,72 @@
 {
-    "background.enabled":true,
+    "background.enabled": true,
     "background.fullscreen": {
-      "images": ["/Users/minghui.liu/code_soft/work_space/open_code/.vscode/background.jpg"],
-      "opacity": 0.1, 
-      "size": "cover",
-      "position": "center",
-      "interval": 0
+        "images": ["/Users/minghui.liu/code_soft/work_space/open_code/.vscode/background.jpg"],
+        "opacity": 0.1,
+        "size": "cover",
+        "position": "center",
+        "interval": 0
     },
     "background.sidebar": {},
     "background.panel": {},
     "todo-tree.tree.scanMode": "workspace only",
-    
+
     "github.gitProtocol": "ssh",
     "remote.downloadExtensionsLocally": true,
     "makefile.configureOnOpen": false,
-    "cmake.generator": "Unix Makefiles",
+
+    // CMake configuration
     "cmake.sourceDirectory": "${workspaceFolder}",
     "cmake.buildDirectory": "${workspaceFolder}/build",
 
+    // Windows specific
+    "cmake.generator": "Ninja",              // windos msvc + ninja
+    // "cmake.generator": "Unix Makefiles",  // linux, macos cmake config
+    "cmake.configureArgs": [
+        "-DCMAKE_C_COMPILER=cl",
+        "-DCMAKE_CXX_COMPILER=cl"
+    ],
+    "cmake.preferredGenerators": [
+        "Ninja",
+        "Visual Studio 17 2022",
+        "Visual Studio 16 2019",
+        "Unix Makefiles"
+    ],
+    "cmake.defaultVariants": {
+        "buildType": {
+            "default": "debug",
+            "description": "The build type.",
+            "choices": {
+                "debug": {
+                    "short": "Debug",
+                    "long": "Emit debug information without performing optimizations",
+                    "buildType": "Debug"
+                },
+                "release": {
+                    "short": "Release",
+                    "long": "Enable optimizations, omit debug info",
+                    "buildType": "Release"
+                },
+                "relwithdebinfo": {
+                    "short": "RelWithDebInfo",
+                    "long": "Perform optimizations (-O2 -g) and include debugging information",
+                    "buildType": "RelWithDebInfo"
+                }
+            }
+        }
+    },
+
+    // C/C++ IntelliSense - disabled (using clangd instead)
     "clangd.detectExtensionConflicts": true,
     "clangd.fallbackFlags": [],
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
     "C_Cpp.intelliSenseEngine": "Disabled",
     "C_Cpp.autocomplete": "Disabled",
-    "clangd.path": "/usr/bin/clangd",
+
+    // clangd configuration (cross-platform)
+    "clangd.path": "${env:ProgramFiles}/LLVM/bin/clangd.exe",  // windows clangd path
+    // "clangd.path": "/usr/bin/clangd",  // linux, macos clangd path
     "clangd.arguments": [
         "--log=verbose",
         "--pretty",
@@ -39,15 +81,14 @@
         "--function-arg-placeholders=false",
         "--compile-commands-dir=${workspaceFolder}/build",
         "--clang-tidy",
-        "--clang-tidy-checks=file:${workspaceFolder}/.clang-tidy",
         "--clang-tidy-checks=bugprone-*,clang-analyzer-*,cppcoreguidelines-*,google-*,modernize-*,performance-*,portability-*,readability-*",
         "--clang-tidy-checks=-google-build-using-namespace,-modernize-use-trailing-return-type",
-        "--fallback-style=file:${workspaceFolder}/.clang-format",
-        "--fallback-style=LLVM",
+        "--fallback-style=LLVM"
     ],
 
-    "rust-analyzer.linkedProjects": ["${workspaceFolder}/rust/guessing_game/Cargo.toml"],
+    "rust-analyzer.linkedProjects": ["${workspaceFolder}/rust/Cargo.toml"],
 
+    // Doxygen documentation generation
     "doxdocgen.c.triggerSequence": "/**",
     "doxdocgen.c.firstLine": "/**",
     "doxdocgen.c.commentPrefix": "*",
@@ -59,15 +100,15 @@
     "doxdocgen.generic.dateFormat": "YYYY.MM.DD",
     "doxdocgen.generic.dateTemplate": " @date{indent:20}{date}",
     "doxdocgen.file.fileOrder": [
-        "file", 
-        "brief", 
-        "details", 
+        "file",
+        "brief",
+        "details",
         "version",
-        "author", 
+        "author",
         "date",
         "copyright",
         "empty",
-        "custom",
+        "custom"
     ],
     "doxdocgen.file.fileTemplate": " @file{indent:20}{name}",
     "doxdocgen.file.versionTag": " @version{indent:20}0.1",
@@ -89,10 +130,10 @@
         "custom"
     ],
     "doxdocgen.generic.briefTemplate": " @brief{indent:20}brief",
-    "doxdocgen.generic.splitCasingSmartText": true, 
-    "doxdocgen.c.setterText": "Set {name}", 
+    "doxdocgen.generic.splitCasingSmartText": true,
+    "doxdocgen.c.setterText": "Set {name}",
     "doxdocgen.c.getterText": "Get {name}",
-    "doxdocgen.c.factoryMethodText": "Create {name}", 
+    "doxdocgen.c.factoryMethodText": "Create {name}",
     "doxdocgen.generic.paramTemplate": " @param{indent:10}{param}{indent:20}Param Description",
     "doxdocgen.generic.filteredKeywords": [
         "me"
@@ -105,7 +146,8 @@
     ],
     "doxdocgen.generic.commandSuggestion": true,
     "doxdocgen.generic.commandSuggestionAddPrefix": true,
-    
+
+    // Editor settings
     "editor.wordWrap": "off",
     "editor.formatOnType": true,
     "files.associations": {
