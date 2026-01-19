@@ -7,151 +7,191 @@
     },
     "configurePresets": [
         {
-            "name": "default",
+            "name": "base",
             "hidden": true,
             "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "$env{CC}",
-                "CMAKE_CXX_COMPILER": "$env{CXX}",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": {
                     "type": "BOOL",
                     "value": "ON"
                 },
-                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-            },
-            "environment": {
-                "CC": "$penv{CC}",
-                "CXX": "$penv{CXX}",
-                "NINJA": "$penv{NINJA}",
-                "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                }
             }
         },
-      {
-        "name": "windows-msvc-debug",
-        "inherits": "default",
-        "displayName": "Windows MSVC Debug",
-        "description": "Windows with MSVC compiler (Debug)",
-        "generator": "Ninja",
-        "cmakeExecutable": "E:/VisualStudio/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe",
-        "architecture": {
-          "value": "x64",
-          "strategy": "external"
-        },
-        "environment": {
-          "VCPKG_ROOT": "E:/thirdlib/vcpkg",
-          "NINJA": "E:/VisualStudio/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe"
-        },
-        "cacheVariables": {
-          "CMAKE_BUILD_TYPE": "Debug",
-          "CMAKE_C_COMPILER": "cl",
-          "CMAKE_CXX_COMPILER": "cl",
-          "CMAKE_MAKE_PROGRAM": "E:/VisualStudio/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe",
-          "CMAKE_TOOLCHAIN_FILE": "E:/thirdlib/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        },
-        "condition": {
-          "type": "equals",
-          "lhs": "$host.systemName",
-          "rhs": "Windows"
-        }
-      },
         {
-            "name": "linux-gcc-debug",
-            "inherits": "default",
-            "displayName": "Linux GCC Debug",
-            "description": "Linux with GCC compiler (Debug)",
-            "generator": "Ninja",
-            "cmakeExecutable": "/usr/bin/cmake",
+            "name": "windows-debug",
+            "inherits": "base",
+            "displayName": "Windows Debug",
+            "description": "Windows with MSVC (Debug)",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "environment": {
+                "VCPKG_ROOT": "E:/thirdlib/vcpkg"
+            }
+        },
+        {
+            "name": "windows-release",
+            "inherits": "base",
+            "displayName": "Windows Release",
+            "description": "Windows with MSVC (Release)",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "environment": {
+                "VCPKG_ROOT": "E:/thirdlib/vcpkg"
+            }
+        },
+        {
+            "name": "linux-debug",
+            "inherits": "base",
+            "displayName": "Linux Debug",
+            "description": "Linux with GCC (Debug)",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_CXX_COMPILER": "g++"
             },
-            "condition": {
-                "type": "equals",
-                "lhs": "$host.systemName",
-                "rhs": "Linux"
+            "environment": {
+                "VCPKG_ROOT": "/root/code/vcpkg"
             }
         },
         {
-            "name": "macos-clang-debug",
-            "inherits": "default",
-            "displayName": "macOS Clang Debug",
-            "description": "macOS with Clang compiler (Debug)",
-            "generator": "Ninja",
-            "cmakeExecutable": "/usr/local/bin/cmake",
+            "name": "linux-release",
+            "inherits": "base",
+            "displayName": "Linux Release",
+            "description": "Linux with GCC (Release)",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            },
+            "environment": {
+                "VCPKG_ROOT": "/root/code/vcpkg"
+            }
+        },
+        {
+            "name": "macos-debug",
+            "inherits": "base",
+            "displayName": "macOS Debug",
+            "description": "macOS with Clang (Debug)",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_MAKE_PROGRAM": "/usr/local/bin/ninja",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_CXX_COMPILER": "clang++"
             },
-            "condition": {
-                "type": "equals",
-                "lhs": "$host.systemName",
-                "rhs": "Darwin"
+            "environment": {
+                "VCPKG_ROOT": "/Users/minghui.liu/code_soft/open_code/vcpkg"
             }
         },
         {
-            "name": "wsl2-gcc-debug",
-            "inherits": "linux-gcc-debug",
-            "displayName": "WSL2 GCC Debug",
-            "description": "WSL2 with GCC compiler (Debug)",
-            "cmakeExecutable": "/usr/bin/cmake",
+            "name": "macos-release",
+            "inherits": "base",
+            "displayName": "macOS Release",
+            "description": "macOS with Clang (Release)",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "/usr/bin/gcc",
-                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
-                "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
             },
-            "condition": {
-                "type": "equals",
-                "lhs": "$host.systemName",
-                "rhs": "Linux"
+            "environment": {
+                "VCPKG_ROOT": "/Users/minghui.liu/code_soft/open_code/vcpkg"
+            }
+        },
+        {
+            "name": "自定义配置预设",
+            "displayName": "自定义配置预设",
+            "description": "设置 Ninja 生成器、版本和安装目录",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
             }
         }
     ],
     "buildPresets": [
         {
             "name": "debug-windows",
-            "configurePreset": "windows-msvc-debug",
+            "configurePreset": "windows-debug",
             "displayName": "Build Debug (Windows)",
             "configuration": "Debug"
         },
         {
+            "name": "release-windows",
+            "configurePreset": "windows-release",
+            "displayName": "Build Release (Windows)",
+            "configuration": "Release"
+        },
+        {
             "name": "debug-linux",
-            "configurePreset": "linux-gcc-debug",
+            "configurePreset": "linux-debug",
             "displayName": "Build Debug (Linux)",
             "configuration": "Debug"
         },
         {
+            "name": "release-linux",
+            "configurePreset": "linux-release",
+            "displayName": "Build Release (Linux)",
+            "configuration": "Release"
+        },
+        {
             "name": "debug-macos",
-            "configurePreset": "macos-clang-debug",
+            "configurePreset": "macos-debug",
             "displayName": "Build Debug (macOS)",
             "configuration": "Debug"
+        },
+        {
+            "name": "release-macos",
+            "configurePreset": "macos-release",
+            "displayName": "Build Release (macOS)",
+            "configuration": "Release"
         }
     ],
     "testPresets": [
         {
-            "name": "test-windows",
-            "configurePreset": "windows-msvc-debug",
+            "name": "test-windows-debug",
+            "configurePreset": "windows-debug",
             "displayName": "Test Debug (Windows)",
             "configuration": "Debug"
         },
         {
-            "name": "test-linux",
-            "configurePreset": "linux-gcc-debug",
+            "name": "test-windows-release",
+            "configurePreset": "windows-release",
+            "displayName": "Test Release (Windows)",
+            "configuration": "Release"
+        },
+        {
+            "name": "test-linux-debug",
+            "configurePreset": "linux-debug",
             "displayName": "Test Debug (Linux)",
             "configuration": "Debug"
         },
         {
-            "name": "test-macos",
-            "configurePreset": "macos-clang-debug",
+            "name": "test-linux-release",
+            "configurePreset": "linux-release",
+            "displayName": "Test Release (Linux)",
+            "configuration": "Release"
+        },
+        {
+            "name": "test-macos-debug",
+            "configurePreset": "macos-debug",
             "displayName": "Test Debug (macOS)",
             "configuration": "Debug"
+        },
+        {
+            "name": "test-macos-release",
+            "configurePreset": "macos-release",
+            "displayName": "Test Release (macOS)",
+            "configuration": "Release"
         }
     ]
 }

@@ -15,46 +15,9 @@
     "remote.downloadExtensionsLocally": true,
     "makefile.configureOnOpen": false,
 
-    // CMake configuration
-    "cmake.sourceDirectory": "${workspaceFolder}",
-    "cmake.buildDirectory": "${workspaceFolder}/build",
-
-    // Windows specific
-    "cmake.generator": "Ninja",              // windos msvc + ninja
-    // "cmake.generator": "Unix Makefiles",  // linux, macos cmake config
-    "cmake.configureArgs": [
-        "-DCMAKE_C_COMPILER=cl",
-        "-DCMAKE_CXX_COMPILER=cl"
-    ],
-    "cmake.preferredGenerators": [
-        "Ninja",
-        "Visual Studio 17 2022",
-        "Visual Studio 16 2019",
-        "Unix Makefiles"
-    ],
-    "cmake.defaultVariants": {
-        "buildType": {
-            "default": "debug",
-            "description": "The build type.",
-            "choices": {
-                "debug": {
-                    "short": "Debug",
-                    "long": "Emit debug information without performing optimizations",
-                    "buildType": "Debug"
-                },
-                "release": {
-                    "short": "Release",
-                    "long": "Enable optimizations, omit debug info",
-                    "buildType": "Release"
-                },
-                "relwithdebinfo": {
-                    "short": "RelWithDebInfo",
-                    "long": "Perform optimizations (-O2 -g) and include debugging information",
-                    "buildType": "RelWithDebInfo"
-                }
-            }
-        }
-    },
+    // CMake Presets configuration (cross-platform)
+    "cmake.useCMakePresets": "always",
+    "cmake.configureOnOpen": true,
 
     // C/C++ IntelliSense - disabled (using clangd instead)
     "clangd.detectExtensionConflicts": true,
@@ -65,8 +28,8 @@
     "C_Cpp.autocomplete": "Disabled",
 
     // clangd configuration (cross-platform)
-    "clangd.path": "${env:ProgramFiles}/LLVM/bin/clangd.exe",  // windows clangd path
-    // "clangd.path": "/usr/bin/clangd",  // linux, macos clangd path
+    // "clangd.path": "${env:ProgramFiles}/LLVM/bin/clangd.exe",  // windows clangd path
+    "clangd.path": "/usr/bin/clangd",  // linux, macos clangd path
     "clangd.arguments": [
         "--log=verbose",
         "--pretty",
