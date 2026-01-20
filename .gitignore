@@ -48,6 +48,8 @@
 
 /out
 
+/examples/qt_example/build
+
 /vcpkg_installed
 
 /vcpkg/vcpkg
