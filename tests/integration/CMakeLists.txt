@@ -23,7 +23,7 @@ target_link_libraries(calc_integration_tests
         calc_utils
         calc_core
         calc_modes
-        calc_ui
+        calc_cli_lib
 )
 
 # Set output directory for test executable

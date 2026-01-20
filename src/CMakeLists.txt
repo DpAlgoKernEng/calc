@@ -23,12 +23,6 @@ set(MODES_SOURCES
     modes/programmer_mode.cpp
     modes/mode_manager.cpp
 )
-set(UI_SOURCES
-    ui/cli/cli_app.cpp
-    ui/cli/command_parser.cpp
-    ui/cli/output_formatter.cpp
-    ui/cli/history_manager.cpp
-)
 set(UTILS_SOURCES
     utils/error.cpp
 )
@@ -49,35 +43,6 @@ add_library(calc_modes ${MODES_SOURCES})
 target_include_directories(calc_modes PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(calc_modes PUBLIC calc_core calc_math)
 
-# Create UI library
-add_library(calc_ui ${UI_SOURCES})
-target_include_directories(calc_ui PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(calc_ui PUBLIC calc_modes calc_core calc_utils)
-
 # Create utils library
 add_library(calc_utils ${UTILS_SOURCES})
 target_include_directories(calc_utils PRIVATE ${CMAKE_SOURCE_DIR}/include)
-
-# Create calc_cli executable
-add_executable(calc_cli
-    main.cpp
-)
-target_link_libraries(calc_cli
-    PRIVATE
-        calc_ui
-        calc_modes
-        calc_core
-        calc_utils
-)
-
-# Set output directory for executables
-set_target_properties(calc_cli PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>"
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
-    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/RelWithDebInfo"
-    RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_BINARY_DIR}/MinSizeRel"
-)
-
-# Create alias for convenience
-add_executable(calc::calc_cli ALIAS calc_cli)

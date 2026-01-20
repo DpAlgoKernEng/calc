@@ -21,6 +21,9 @@ option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 # Benchmark option
 option(ENABLE_BENCHMARK "Enable benchmark targets" OFF)
 
+# Qt GUI option
+option(BUILD_QT_GUI "Build Qt GUI application" ON)
+
 # Warnings as errors option (for CI)
 option(WERROR "Treat warnings as errors" OFF)
 
@@ -56,7 +59,14 @@ FetchContent_MakeAvailable(googletest)
 
 # Subdirectories
 add_subdirectory(src)
+add_subdirectory(src/ui/cli)
 add_subdirectory(tests)
+
+# Qt GUI support
+if(BUILD_QT_GUI)
+    message(STATUS "Qt GUI build enabled")
+    add_subdirectory(src/ui/qt)
+endif()
 
 # Installation
 install(TARGETS calc_cli DESTINATION bin)
@@ -72,5 +82,6 @@ message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "  System: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "  Qt GUI: ${BUILD_QT_GUI}")
 message(STATUS "========================================")
 message(STATUS "")
