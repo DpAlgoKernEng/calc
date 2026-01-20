@@ -10,19 +10,19 @@
 #include <QFont>
 #include <QPalette>
 #include <QEvent>
+#include <QStyle>
 
 namespace calc::ui::qt {
 
 DisplayWidget::DisplayWidget(QWidget* parent)
     : QWidget(parent)
-    , expressionEdit_(nullptr)
+    , expressionLabel_(nullptr)
     , resultLabel_(nullptr)
     , statusLabel_(nullptr)
     , errorState_(false)
     , precision_(6)
 {
     setupUI();
-    setupConnections();
 }
 
 DisplayWidget::~DisplayWidget() = default;
@@ -30,86 +30,54 @@ DisplayWidget::~DisplayWidget() = default;
 void DisplayWidget::setupUI()
 {
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(8, 8, 8, 8);
-    layout->setSpacing(4);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(8);
 
-    // 结果显示标签
-    resultLabel_ = new QLabel("", this);
+    // 表达式预览 (小字体，顶部) - 改为只读标签
+    expressionLabel_ = new QLabel("", this);
+    expressionLabel_->setObjectName("expressionLabel");
+    expressionLabel_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    expressionLabel_->setMinimumHeight(24);
+    expressionLabel_->setWordWrap(true);
+
+    QFont exprFont = expressionLabel_->font();
+    exprFont.setPointSize(14);
+    exprFont.setFamily("SF Mono, Monaco, Consolas, monospace");
+    expressionLabel_->setFont(exprFont);
+
+    layout->addWidget(expressionLabel_);
+
+    // 主结果 (大字体，底部，右对齐)
+    resultLabel_ = new QLabel("0", this);
     resultLabel_->setObjectName("resultLabel");
     resultLabel_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    resultLabel_->setMinimumHeight(60);
+    resultLabel_->setMinimumHeight(80);
 
     QFont resultFont = resultLabel_->font();
-    resultFont.setPointSize(28);
+    resultFont.setPointSize(48);
     resultFont.setBold(true);
+    resultFont.setWeight(QFont::Black);
     resultLabel_->setFont(resultFont);
 
     layout->addWidget(resultLabel_);
 
-    // 表达式输入框
-    expressionEdit_ = new QLineEdit("", this);
-    expressionEdit_->setObjectName("expressionEdit");
-    expressionEdit_->setMinimumHeight(50);
-    expressionEdit_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    expressionEdit_->setPlaceholderText("Enter expression...");
-
-    QFont exprFont = expressionEdit_->font();
-    exprFont.setPointSize(20);
-    expressionEdit_->setFont(exprFont);
-
-    layout->addWidget(expressionEdit_);
-
-    // 状态标签
+    // 状态标签 (隐藏，玻璃拟态设计不需要)
     statusLabel_ = new QLabel("", this);
     statusLabel_->setObjectName("statusLabel");
     statusLabel_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusLabel_->setMinimumHeight(20);
-    statusLabel_->setWordWrap(true);
-
-    QFont statusFont = statusLabel_->font();
-    statusFont.setPointSize(10);
-    statusLabel_->setFont(statusFont);
+    statusLabel_->hide();  // 隐藏以获得更干净的玻璃拟态设计
 
     layout->addWidget(statusLabel_);
 
-    setStyleSheet(R"(
-        QLabel#resultLabel {
-            color: #2196F3;
-            background-color: #f5f5f5;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-        }
-
-        QLineEdit#expressionEdit {
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            background-color: white;
-        }
-
-        QLineEdit#expressionEdit:focus {
-            border-color: #2196F3;
-        }
-
-        QLabel#statusLabel {
-            color: #757575;
-        }
-    )");
-}
-
-void DisplayWidget::setupConnections()
-{
-    connect(expressionEdit_, &QLineEdit::textChanged,
-            this, &DisplayWidget::onTextChanged);
-    connect(expressionEdit_, &QLineEdit::returnPressed,
-            this, &DisplayWidget::onReturnPressed);
+    // 移除内联样式，使用 QSS
+    // Styles are now in default.qss
 }
 
 void DisplayWidget::setExpression(const QString& text)
 {
-    expressionEdit_->setText(text);
-    expressionEdit_->setCursorPosition(text.length());
+    // 表达式显示在预览标签中（小字体，顶部）
+    expressionLabel_->setText(text);
 }
 
 void DisplayWidget::setResult(const QString& text)
@@ -126,8 +94,8 @@ void DisplayWidget::setError(const QString& error)
 
 void DisplayWidget::clear()
 {
-    expressionEdit_->clear();
-    resultLabel_->clear();
+    expressionLabel_->clear();
+    resultLabel_->setText("0");
     statusLabel_->clear();
     statusLabel_->setStyleSheet("color: #757575;");
     setErrorState(false);
@@ -135,61 +103,56 @@ void DisplayWidget::clear()
 
 QString DisplayWidget::getExpression() const
 {
-    return expressionEdit_->text();
+    // 返回当前输入，即 resultLabel 的内容
+    return resultLabel_->text();
 }
 
 void DisplayWidget::appendExpression(const QString& text)
 {
-    expressionEdit_->insert(text);
+    // 添加到结果显示
+    QString current = resultLabel_->text();
+    if (current == "0" && !text.contains('.')) {
+        resultLabel_->setText(text);
+    } else {
+        resultLabel_->setText(current + text);
+    }
 }
 
 void DisplayWidget::backspace()
 {
-    expressionEdit_->backspace();
+    // 删除最后一个字符
+    QString current = resultLabel_->text();
+    if (current.length() > 1) {
+        resultLabel_->setText(current.left(current.length() - 1));
+    } else {
+        resultLabel_->setText("0");
+    }
 }
 
 void DisplayWidget::setErrorState(bool error)
 {
     errorState_ = error;
+    // 使用 QSS 样式而不是内联样式
+    // 样式在 default.qss 中定义
     if (error) {
-        expressionEdit_->setStyleSheet(R"(
-            QLineEdit {
-                border: 2px solid #F44336;
-                background-color: #FFEBEE;
-            }
-        )");
+        resultLabel_->setProperty("error", true);
+        resultLabel_->style()->unpolish(resultLabel_);
+        resultLabel_->style()->polish(resultLabel_);
     } else {
-        expressionEdit_->setStyleSheet(R"(
-            QLineEdit {
-                border: 2px solid #ddd;
-                background-color: white;
-            }
-
-            QLineEdit:focus {
-                border-color: #2196F3;
-            }
-        )");
+        resultLabel_->setProperty("error", false);
+        resultLabel_->style()->unpolish(resultLabel_);
+        resultLabel_->style()->polish(resultLabel_);
     }
 }
 
 void DisplayWidget::setBusyState(bool busy)
 {
-    expressionEdit_->setEnabled(!busy);
+    setEnabled(!busy);
 }
 
 void DisplayWidget::setPrecision(int precision)
 {
     precision_ = precision;
-}
-
-void DisplayWidget::onTextChanged(const QString& text)
-{
-    emit expressionChanged(text);
-}
-
-void DisplayWidget::onReturnPressed()
-{
-    emit calculateRequested(expressionEdit_->text());
 }
 
 } // namespace calc::ui::qt

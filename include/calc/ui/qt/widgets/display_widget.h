@@ -8,7 +8,6 @@
 
 #include <QWidget>
 #include <QLabel>
-#include <QLineEdit>
 
 namespace calc::ui::qt {
 
@@ -36,24 +35,19 @@ public:
     // 显示状态
     void setErrorState(bool error);
     void setBusyState(bool busy);
+    bool hasFocus() const { return false; }  // 标签不能获取焦点
 
     // 格式化
     void setPrecision(int precision);
 
 signals:
-    void expressionChanged(const QString& expression);
     void calculateRequested(const QString& expression);
     void clearRequested();
 
-private slots:
-    void onTextChanged(const QString& text);
-    void onReturnPressed();
-
 private:
     void setupUI();
-    void setupConnections();
 
-    QLineEdit* expressionEdit_;
+    QLabel* expressionLabel_;  // 表达式预览标签 (只读)
     QLabel* resultLabel_;
     QLabel* statusLabel_;
     bool errorState_;

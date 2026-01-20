@@ -35,6 +35,8 @@ set(WIDGET_SOURCES
     widgets/keypad_widget.cpp
     widgets/mode_selector.cpp
     widgets/history_widget.cpp
+    widgets/history_button.cpp
+    widgets/history_modal.cpp
     widgets/function_panel.cpp
     widgets/converter_panel.cpp
 )
@@ -46,6 +48,8 @@ set(WIDGET_HEADERS
     ${CMAKE_SOURCE_DIR}/include/calc/ui/qt/widgets/keypad_widget.h
     ${CMAKE_SOURCE_DIR}/include/calc/ui/qt/widgets/mode_selector.h
     ${CMAKE_SOURCE_DIR}/include/calc/ui/qt/widgets/history_widget.h
+    ${CMAKE_SOURCE_DIR}/include/calc/ui/qt/widgets/history_button.h
+    ${CMAKE_SOURCE_DIR}/include/calc/ui/qt/widgets/history_modal.h
     ${CMAKE_SOURCE_DIR}/include/calc/ui/qt/widgets/function_panel.h
     ${CMAKE_SOURCE_DIR}/include/calc/ui/qt/widgets/converter_panel.h
 )

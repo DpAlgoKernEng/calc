@@ -12,6 +12,9 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QFrame>
+#include <QLineEdit>
+#include <QComboBox>
+#include <QMenu>
 
 namespace calc::ui::qt {
 
@@ -35,20 +38,39 @@ signals:
     void entrySelected(const QString& expression);
     void entryCopied(const QString& text);
     void clearRequested();
+    void entryDeleted(int index);
+    void exportRequested();
 
 private slots:
     void onItemDoubleClicked(QListWidgetItem* item);
     void onClearClicked();
     void onCopyClicked();
+    void onSearchTextChanged(const QString& text);
+    void onModeFilterChanged(const QString& mode);
+    void onItemContextMenu(const QPoint& pos);
+    void onExportClicked();
+    void onDeleteItem();
 
 private:
     void setupUI();
     void setupConnections();
+    void setupContextMenu();
+    void applyFilters();
+    void updateEntryCount();
+    bool matchesFilter(const QVariantMap& entry) const;
 
     QListWidget* historyList_;
+    QLineEdit* searchEdit_;
+    QComboBox* modeFilterCombo_;
     QPushButton* clearButton_;
     QPushButton* copyButton_;
+    QPushButton* exportButton_;
+    QLabel* countLabel_;
+    QMenu* contextMenu_;
+
     QVariantList entries_;
+    QString currentSearch_;
+    QString currentModeFilter_;
 };
 
 } // namespace calc::ui::qt

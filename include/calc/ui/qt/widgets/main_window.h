@@ -18,6 +18,8 @@ class DisplayWidget;
 class KeypadWidget;
 class ModeSelector;
 class HistoryWidget;
+class HistoryButton;
+class HistoryModal;
 class FunctionPanel;
 class ConverterPanel;
 class CalculatorController;
@@ -38,6 +40,7 @@ public:
 protected:
     void resizeEvent(QResizeEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
 
 private slots:
     void onModeChanged(const QString& modeName);
@@ -47,6 +50,8 @@ private slots:
     void onSettingsRequested();
     void onAboutRequested();
     void onExitRequested();
+    void onHistoryButtonClicked();
+    void onHistoryModalClosed();
 
 private:
     void setupUI();
@@ -57,10 +62,14 @@ private:
 
     // UI Components
     QWidget* centralWidget_;
+    QWidget* glassCard_;
+    QWidget* headerBar_;
     DisplayWidget* displayWidget_;
     KeypadWidget* keypadWidget_;
     ModeSelector* modeSelector_;
     HistoryWidget* historyWidget_;
+    HistoryButton* historyButton_;
+    HistoryModal* historyModal_;
     FunctionPanel* functionPanel_;
     ConverterPanel* converterPanel_;
     QStackedWidget* modeStack_;
@@ -71,6 +80,7 @@ private:
     // State
     QString currentMode_;
     bool isShiftPressed_;
+    bool historyModalVisible_;
 };
 
 } // namespace calc::ui::qt

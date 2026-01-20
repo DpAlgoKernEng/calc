@@ -112,12 +112,17 @@ void FunctionPanel::createOtherFunctions()
 QPushButton* FunctionPanel::createFunctionButton(const QString& text, const QString& function)
 {
     auto* btn = new QPushButton(text, this);
-    btn->setMinimumHeight(35);
+    btn->setMinimumHeight(50);
 
+    btn->setMinimumWidth(60);
     QFont font = btn->font();
     font.setPointSize(11);
     btn->setFont(font);
 
+
+    // 移除内联样式，使用 QSS
+    // 设置紫色渐变样式用于科学函数
+    btn->setProperty("buttonType", "functionPurple");
     btn->setProperty("function", function);
     functionButtons_[function] = btn;
 

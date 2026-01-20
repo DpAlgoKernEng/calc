@@ -8,6 +8,8 @@
 #include "calc/ui/qt/widgets/keypad_widget.h"
 #include "calc/ui/qt/widgets/mode_selector.h"
 #include "calc/ui/qt/widgets/history_widget.h"
+#include "calc/ui/qt/widgets/history_button.h"
+#include "calc/ui/qt/widgets/history_modal.h"
 #include "calc/ui/qt/widgets/function_panel.h"
 #include "calc/ui/qt/widgets/converter_panel.h"
 #include "calc/ui/qt/core/calculator_controller.h"
@@ -31,14 +33,17 @@ MainWindow::MainWindow(QWidget* parent)
     , controller_(new CalculatorController(this))
     , currentMode_("standard")
     , isShiftPressed_(false)
+    , historyModalVisible_(false)
 {
     setupUI();
     setupMenuBar();
     setupStatusBar();
     setupConnections();
 
-    setWindowTitle("Calc");
-    resize(800, 600);
+    setWindowTitle("Calc Pro");
+
+    // 设置固定尺寸以匹配 React 卡片设计
+    resize(700, 900);
 }
 
 MainWindow::~MainWindow() = default;
@@ -47,33 +52,67 @@ void MainWindow::setupUI()
 {
     // 创建中心组件
     centralWidget_ = new QWidget(this);
+    centralWidget_->setObjectName("centralWidget");
     setCentralWidget(centralWidget_);
 
-    // 主布局
+    // 主布局 - 居中
     auto* mainLayout = new QVBoxLayout(centralWidget_);
-    mainLayout->setContentsMargins(8, 8, 8, 8);
-    mainLayout->setSpacing(8);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(0);
+    mainLayout->addStretch();  // 推内容到中间
 
-    // 模式选择器
-    modeSelector_ = new ModeSelector(centralWidget_);
-    mainLayout->addWidget(modeSelector_);
+    // 玻璃卡片容器 (主计算器卡片)
+    glassCard_ = new QWidget(centralWidget_);
+    glassCard_->setObjectName("glassCard");
+    glassCard_->setMaximumWidth(600);
 
-    // 分割器：左侧键盘，右侧历史记录
-    auto* splitter = new QSplitter(Qt::Horizontal, centralWidget_);
+    auto* cardLayout = new QVBoxLayout(glassCard_);
+    cardLayout->setContentsMargins(0, 0, 0, 0);
+    cardLayout->setSpacing(0);
 
-    // 左侧：显示区 + 键盘
-    auto* leftWidget = new QWidget(centralWidget_);
-    auto* leftLayout = new QVBoxLayout(leftWidget);
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-    leftLayout->setSpacing(8);
+    // 头部栏：模式标签 + 历史按钮
+    headerBar_ = new QWidget(glassCard_);
+    headerBar_->setObjectName("headerBar");
 
-    // 显示区
-    displayWidget_ = new DisplayWidget(leftWidget);
-    leftLayout->addWidget(displayWidget_, 1);
+    auto* headerLayout = new QHBoxLayout(headerBar_);
+    headerLayout->setContentsMargins(24, 24, 16, 24);
+    headerLayout->setSpacing(8);
 
-    // 模式堆叠窗口
-    modeStack_ = new QStackedWidget(leftWidget);
-    leftLayout->addWidget(modeStack_, 2);
+    // 模式选择器 (胶囊标签)
+    modeSelector_ = new ModeSelector(headerBar_);
+    headerLayout->addWidget(modeSelector_);
+    headerLayout->addStretch();
+
+    // 悬浮历史按钮
+    historyButton_ = new HistoryButton(headerBar_);
+    headerLayout->addWidget(historyButton_);
+
+    cardLayout->addWidget(headerBar_);
+
+    // 显示区域
+    QWidget* displayContainer = new QWidget(glassCard_);
+    displayContainer->setObjectName("displayArea");
+
+    auto* displayLayout = new QVBoxLayout(displayContainer);
+    displayLayout->setContentsMargins(32, 24, 32, 24);
+
+    displayWidget_ = new DisplayWidget(displayContainer);
+    displayLayout->addWidget(displayWidget_);
+
+    cardLayout->addWidget(displayContainer);
+
+    // 按钮容器
+    QWidget* buttonContainer = new QWidget(glassCard_);
+    buttonContainer->setObjectName("buttonContainer");
+
+    auto* buttonLayout = new QVBoxLayout(buttonContainer);
+    buttonLayout->setContentsMargins(32, 0, 32, 32);
+    buttonLayout->setSpacing(0);
+
+    // 模式堆叠窗口用于不同按钮布局
+    modeStack_ = new QStackedWidget(buttonContainer);
+    modeStack_->setObjectName("modeStack");
+    buttonLayout->addWidget(modeStack_);
 
     // 键盘组件
     keypadWidget_ = new KeypadWidget(modeStack_);
@@ -84,17 +123,16 @@ void MainWindow::setupUI()
     modeStack_->addWidget(functionPanel_);        // Index 1: Scientific
     modeStack_->addWidget(converterPanel_);       // Index 2: Programmer
 
-    splitter->addWidget(leftWidget);
+    cardLayout->addWidget(buttonContainer);
 
-    // 右侧：历史记录
-    historyWidget_ = new HistoryWidget(centralWidget_);
-    historyWidget_->setMinimumWidth(250);
-    splitter->addWidget(historyWidget_);
+    // 添加卡片到主布局
+    mainLayout->addWidget(glassCard_);
+    mainLayout->addStretch();
 
-    splitter->setStretchFactor(0, 3);
-    splitter->setStretchFactor(1, 1);
-
-    mainLayout->addWidget(splitter);
+    // 历史模态框 (初始隐藏)
+    historyModal_ = new HistoryModal(this);
+    historyModal_->setObjectName("historyModal");
+    historyModal_->hide();
 }
 
 void MainWindow::setupMenuBar()
@@ -192,12 +230,21 @@ void MainWindow::setupConnections()
     connect(modeSelector_, &ModeSelector::modeChanged,
             controller_, &CalculatorController::switchMode);
 
-    // 历史记录信号
-    connect(historyWidget_, &HistoryWidget::entrySelected,
+    // 历史按钮信号 (新增)
+    connect(historyButton_, &HistoryButton::clicked,
+            this, &MainWindow::onHistoryButtonClicked);
+
+    // 历史模态框信号 (新增)
+    connect(historyModal_, &HistoryModal::closed,
+            this, &MainWindow::onHistoryModalClosed);
+    connect(historyModal_, &HistoryModal::itemSelected,
             this, &MainWindow::onHistoryItemClicked);
+    connect(historyModal_, &HistoryModal::clearRequested,
+            controller_, &CalculatorController::clearHistory);
     connect(controller_, &CalculatorController::historyUpdated,
-            historyWidget_, [this]() {
-                historyWidget_->setHistory(controller_->getHistory());
+            this, [this]() {
+                historyModal_->setHistory(controller_->getHistory());
+                historyButton_->setCount(static_cast<int>(controller_->getHistory().size()));
             });
 
     // 函数面板信号
@@ -211,7 +258,13 @@ void MainWindow::setupConnections()
     });
 
     auto* escapeShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
-    connect(escapeShortcut, &QShortcut::activated, displayWidget_, &DisplayWidget::clear);
+    connect(escapeShortcut, &QShortcut::activated, [this]() {
+        if (historyModalVisible_) {
+            onHistoryButtonClicked();  // 关闭模态框
+        } else {
+            displayWidget_->clear();
+        }
+    });
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -219,11 +272,60 @@ void MainWindow::resizeEvent(QResizeEvent* event)
     QMainWindow::resizeEvent(event);
 }
 
-void MainWindow::keyPressEvent(QKeyEvent* event)
+void MainWindow::keyReleaseEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Shift) {
+        isShiftPressed_ = false;
+    }
+    QMainWindow::keyReleaseEvent(event);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent* event)
+{
+    // 如果按键在显示框中，让显示框处理
+    if (displayWidget_->hasFocus()) {
+        return;
+    }
+
+    // 处理数字和运算符键
+    if (event->key() >= Qt::Key_0 && event->key() <= Qt::Key_9) {
+        QString num = QString::number(event->key() - Qt::Key_0);
+        displayWidget_->appendExpression(num);
+    } else if (event->key() == Qt::Key_A || event->key() == Qt::Key_B ||
+               event->key() == Qt::Key_C || event->key() == Qt::Key_D ||
+               event->key() == Qt::Key_E || event->key() == Qt::Key_F) {
+        // 在程序员模式下支持十六进制输入
+        if (currentMode_ == "programmer") {
+            displayWidget_->appendExpression(QChar(event->key()).toUpper());
+        }
+    } else if (event->key() == Qt::Key_Plus) {
+        displayWidget_->appendExpression("+");
+    } else if (event->key() == Qt::Key_Minus) {
+        displayWidget_->appendExpression("-");
+    } else if (event->key() == Qt::Key_Asterisk) {
+        displayWidget_->appendExpression("*");
+    } else if (event->key() == Qt::Key_Slash) {
+        displayWidget_->appendExpression("/");
+    } else if (event->key() == Qt::Key_Period) {
+        displayWidget_->appendExpression(".");
+    } else if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+        controller_->evaluateExpression(displayWidget_->getExpression());
+    } else if (event->key() == Qt::Key_Equal) {
+        controller_->evaluateExpression(displayWidget_->getExpression());
+    } else if (event->key() == Qt::Key_Backspace) {
+        displayWidget_->backspace();
+    } else if (event->key() == Qt::Key_Escape) {
+        displayWidget_->clear();
+    } else if (event->key() == Qt::Key_Delete) {
+        displayWidget_->clear();
+    } else if (event->key() == Qt::Key_ParenLeft) {
+        displayWidget_->appendExpression("(");
+    } else if (event->key() == Qt::Key_ParenRight) {
+        displayWidget_->appendExpression(")");
+    } else if (event->key() == Qt::Key_Shift) {
         isShiftPressed_ = true;
     }
+
     QMainWindow::keyPressEvent(event);
 }
 
@@ -237,9 +339,22 @@ void MainWindow::onModeChanged(const QString& modeName)
     // 更新 UI 布局
     updateUIForMode(modeName);
 
-    // 更新状态栏
-    QString desc = controller_->getCurrentMode();
-    statusBar()->showMessage(QString("Mode: %1").arg(desc));
+    // 更新状态栏，显示更详细的信息
+    QString modeDesc;
+    if (modeName == "standard") {
+        modeDesc = "Standard - Basic arithmetic operations";
+    } else if (modeName == "scientific") {
+        modeDesc = "Scientific - Advanced mathematical functions";
+    } else if (modeName == "programmer") {
+        modeDesc = "Programmer - Base conversion & bitwise operations";
+    }
+    statusBar()->showMessage(QString("Switched to %1").arg(modeDesc), 3000);
+
+    // 更新键盘布局
+    keypadWidget_->update();
+
+    // 确保焦点在输入框
+    displayWidget_->setFocus();
 }
 
 void MainWindow::onEvaluationFinished(bool success, const QString& result, const QString& errorMsg)
@@ -280,6 +395,27 @@ void MainWindow::onAboutRequested()
 void MainWindow::onExitRequested()
 {
     close();
+}
+
+void MainWindow::onHistoryButtonClicked()
+{
+    historyModalVisible_ = !historyModalVisible_;
+
+    if (historyModalVisible_) {
+        // 显示模态框
+        historyModal_->setHistory(controller_->getHistory());
+        historyModal_->setGeometry(0, 0, width(), height());
+        historyModal_->show();
+        historyModal_->raise();
+        historyModal_->activateWindow();
+    } else {
+        historyModal_->hide();
+    }
+}
+
+void MainWindow::onHistoryModalClosed()
+{
+    historyModalVisible_ = false;
 }
 
 void MainWindow::updateUIForMode(const QString& modeName)

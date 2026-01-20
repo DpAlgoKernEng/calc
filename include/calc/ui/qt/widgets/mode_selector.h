@@ -1,22 +1,20 @@
 /**
  * @file mode_selector.h
- * @brief 模式选择组件
+ * @brief 模式选择组件 - 胶囊形状标签
  */
 
 #ifndef CALC_UI_QT_WIDGETS_MODE_SELECTOR_H
 #define CALC_UI_QT_WIDGETS_MODE_SELECTOR_H
 
 #include <QWidget>
-#include <QButtonGroup>
-#include <QRadioButton>
 #include <QPushButton>
-#include <QFrame>
-#include <QFont>
+#include <QMap>
 
 namespace calc::ui::qt {
 
 /**
- * @brief 模式选择组件
+ * @brief 模式选择组件 - 胶囊形状标签
+ * 匹配 React 示例中的 pill tabs 设计
  */
 class ModeSelector : public QWidget {
     Q_OBJECT
@@ -33,15 +31,15 @@ signals:
     void modeChanged(const QString& mode);
 
 private slots:
-    void onModeButtonClicked();
+    void onModeTabClicked();
 
 private:
     void setupUI();
     void setupConnections();
-    void createModeButton(const QString& displayName, const QString& name, const QString& tooltip);
+    void createModeTab(const QString& id, const QString& label, const QString& icon);
 
-    QButtonGroup* modeGroup_;
-    QMap<QString, QRadioButton*> modeButtons_;
+    QWidget* buttonContainer_;
+    QMap<QString, QPushButton*> modeButtons_;
     QString currentMode_;
 };
 

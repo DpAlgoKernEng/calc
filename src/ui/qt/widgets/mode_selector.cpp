@@ -1,27 +1,23 @@
 /**
  * @file mode_selector.cpp
- * @brief 模式选择组件实现
+ * @brief 模式选择组件实现 - 胶囊形状标签
  */
 
 #include "calc/ui/qt/widgets/mode_selector.h"
 
 #include <QHBoxLayout>
-#include <QButtonGroup>
-#include <QRadioButton>
-#include <QFrame>
-#include <QFont>
+#include <QPushButton>
+#include <QStyle>
 
 namespace calc::ui::qt {
 
 ModeSelector::ModeSelector(QWidget* parent)
     : QWidget(parent)
-    , modeGroup_(new QButtonGroup(this))
+    , buttonContainer_(nullptr)
     , currentMode_("standard")
 {
     setupUI();
     setupConnections();
-
-    // 设置默认模式
     setCurrentMode("standard");
 }
 
@@ -30,67 +26,62 @@ ModeSelector::~ModeSelector() = default;
 void ModeSelector::setupUI()
 {
     auto* layout = new QHBoxLayout(this);
-    layout->setSpacing(16);
-    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(8);
 
-    // 创建单选按钮
-    createModeButton("Standard", "standard", "Basic arithmetic");
-    createModeButton("Scientific", "scientific", "Advanced functions");
-    createModeButton("Programmer", "programmer", "Base conversion & bitwise");
+    buttonContainer_ = new QWidget(this);
+    auto* containerLayout = new QHBoxLayout(buttonContainer_);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(8);
 
-    // 添加分隔符
-    auto* separator = new QFrame(this);
-    separator->setFrameShape(QFrame::VLine);
-    separator->setFrameShadow(QFrame::Sunken);
-    layout->addStretch();
+    // 创建胶囊标签 - 标准模式
+    createModeTab("standard", "标准", "🧮");
 
-    // 帮助按钮
-    auto* helpButton = new QPushButton("?", this);
-    helpButton->setMaximumSize(24, 24);
-    helpButton->setToolTip("Help");
-    layout->addWidget(helpButton);
+    // 创建胶囊标签 - 科学模式
+    createModeTab("scientific", "科学", "🧪");
+
+    // 创建胶囊标签 - 程序员模式
+    createModeTab("programmer", "程序员", "💻");
+
+    layout->addWidget(buttonContainer_);
 }
 
-void ModeSelector::createModeButton(const QString& displayName, const QString& name, const QString& tooltip)
+void ModeSelector::createModeTab(const QString& id, const QString& label, const QString& icon)
 {
-    auto* radioBtn = new QRadioButton(displayName, this);
-    radioBtn->setProperty("modeName", name);
-    radioBtn->setToolTip(tooltip);
+    auto* button = new QPushButton(this);
+    QString buttonText = QString("%1 %2").arg(icon, label);
+    button->setText(buttonText);
+    button->setObjectName("modeTab");
+    button->setProperty("modeId", id);
+    button->setProperty("buttonType", "modeTab");
 
-    QFont font = radioBtn->font();
+    // 胶囊形状样式
+    button->setMinimumHeight(40);
+    button->setMaximumHeight(40);
+
+    QFont font = button->font();
     font.setPointSize(12);
-    radioBtn->setFont(font);
+    font.setWeight(QFont::Medium);
+    button->setFont(font);
 
-    modeGroup_->addButton(radioBtn);
-    modeButtons_[name] = radioBtn;
+    modeButtons_[id] = button;
 
-    auto* layout = qobject_cast<QHBoxLayout*>(this->layout());
-    layout->insertWidget(layout->count() - 2, radioBtn);
+    auto* containerLayout = qobject_cast<QHBoxLayout*>(buttonContainer_->layout());
+    containerLayout->addWidget(button);
 }
 
 void ModeSelector::setupConnections()
 {
-    connect(modeGroup_, &QButtonGroup::idClicked, this, [this](int id) {
-        auto* btn = qobject_cast<QRadioButton*>(modeGroup_->button(id));
-        if (btn) {
-            QString mode = btn->property("modeName").toString();
-            emit modeChanged(mode);
-        }
-    });
+    for (auto* btn : modeButtons_.values()) {
+        connect(btn, &QPushButton::clicked, this, &ModeSelector::onModeTabClicked);
+    }
 }
 
 void ModeSelector::setAvailableModes(const QStringList& modes)
 {
-    // 隐藏所有按钮
     for (auto* btn : modeButtons_.values()) {
-        btn->hide();
-    }
-
-    // 显示指定模式的按钮
-    for (const QString& mode : modes) {
-        if (modeButtons_.contains(mode)) {
-            modeButtons_[mode]->show();
-        }
+        QString modeId = btn->property("modeId").toString();
+        btn->setVisible(modes.contains(modeId));
     }
 }
 
@@ -98,8 +89,12 @@ void ModeSelector::setCurrentMode(const QString& mode)
 {
     currentMode_ = mode;
 
-    if (modeButtons_.contains(mode)) {
-        modeButtons_[mode]->setChecked(true);
+    // 更新按钮状态
+    for (auto* btn : modeButtons_.values()) {
+        QString modeId = btn->property("modeId").toString();
+        btn->setProperty("active", modeId == mode);
+        btn->style()->unpolish(btn);
+        btn->style()->polish(btn);
     }
 }
 
@@ -108,13 +103,15 @@ QString ModeSelector::getCurrentMode() const
     return currentMode_;
 }
 
-void ModeSelector::onModeButtonClicked()
+void ModeSelector::onModeTabClicked()
 {
-    auto* btn = qobject_cast<QRadioButton*>(sender());
-    if (btn) {
-        QString mode = btn->property("modeName").toString();
-        currentMode_ = mode;
-        emit modeChanged(mode);
+    auto* button = qobject_cast<QPushButton*>(sender());
+    if (button) {
+        QString mode = button->property("modeId").toString();
+        if (mode != currentMode_) {
+            setCurrentMode(mode);
+            emit modeChanged(mode);
+        }
     }
 }
 

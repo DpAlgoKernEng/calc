@@ -10,6 +10,7 @@
 #include <QGridLayout>
 #include <QMap>
 #include <QPushButton>
+#include <QEvent>
 
 namespace calc::ui::qt {
 
@@ -52,6 +53,9 @@ private:
     void createScientificLayout();
     void createProgrammerLayout();
     QPushButton* createButton(const QString& text, const QString& key);
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
     QGridLayout* layout_;
     QMap<QString, QPushButton*> buttons_;
