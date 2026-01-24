@@ -14,6 +14,10 @@ int main(int argc, char *argv[])
 {
     // 创建 Qt 应用
     QApplication app(argc, argv);
+    qDebug() << "QApplication created";
+    qDebug() << "Library paths:" << QCoreApplication::libraryPaths();
+    qDebug() << "Application dir:" << QCoreApplication::applicationDirPath();
+    qDebug() << "Platform plugin paths:" << QCoreApplication::libraryPaths();
 
     // 设置应用元数据
     app.setApplicationName("Calc");
@@ -52,51 +56,8 @@ int main(int argc, char *argv[])
         app.setStyle(QStyleFactory::create("Fusion"));
     }
 
-    // 设置全局样式表
-    app.setStyleSheet(R"(
-        QMainWindow {
-            background-color: #f5f5f5;
-        }
-
-        QMenuBar {
-            background-color: #f5f5f5;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        QMenuBar::item {
-            padding: 6px 12px;
-        }
-
-        QMenuBar::item:selected {
-            background-color: #E3F2FD;
-        }
-
-        QMenu {
-            background-color: white;
-            border: 1px solid #e0e0e0;
-        }
-
-        QMenu::item {
-            padding: 6px 24px;
-        }
-
-        QMenu::item:selected {
-            background-color: #E3F2FD;
-        }
-
-        QStatusBar {
-            background-color: #f5f5f5;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        QSplitter::handle {
-            background-color: #e0e0e0;
-        }
-
-        QSplitter::handle:hover {
-            background-color: #bdbdbd;
-        }
-    )");
+    // 设置全局样式表 - 暂时禁用以调试崩溃
+    app.setStyleSheet("");
 
     // 创建主窗口
     calc::ui::qt::MainWindow window;

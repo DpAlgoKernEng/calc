@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake:*)",
+      "Bash(./calc_qt_gui.exe:*)",
+      "Bash(echo:*)",
+      "Bash(cmd.exe /c \"calc_qt_gui.exe 2>&1\")",
+      "Bash(powershell.exe -Command \"& { & ''.\\\\calc_qt_gui.exe'' 2>&1; Exit $LASTEXITCODE }\")",
+      "Bash(where:*)",
+      "Bash(find:*)",
+      "Bash(\"build\\\\windows-release\\\\Release\\\\calc_qt_gui.exe\")",
+      "Bash(powershell:*)",
+      "Bash(PATH=\"E:/thirdlib/vcpkg/installed/x64-windows/bin:$PATH\":*)",
+      "Bash(\"E:/thirdlib/vcpkg/installed/x64-windows/tools/Qt6/bin/windeployqt.exe\":*)",
+      "Bash(cmd:*)",
+      "Bash(ls -la \"build\\\\windows-release\\\\Release\"\" | grep -i \"msvcp|vcruntime \")",
+      "Bash(set QT_DEBUG_PLUGINS=1:*)",
+      "Bash(scripts/build.bat:*)",
+      "Bash(set:*)",
+      "Bash(export:*)",
+      "Bash(\"E:/VisualStudio/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe\":*)",
+      "Bash(ldd:*)",
+      "Bash(objdump:*)",
+      "Bash(windbg:*)",
+      "Bash(gdb:*)",
+      "Bash(dir:*)",
+      "Bash(copy:*)",
+      "Bash(dumpbin:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(start calc_qt_gui.exe:*)",
+      "Bash(QT_DEBUG_PLUGINS=1 ./calc_qt_gui.exe:*)",
+      "Bash(\"C:/Program Files/CMake/bin/cmake.exe\" --build:*)"
+    ]
+  }
+}

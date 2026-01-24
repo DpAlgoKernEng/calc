@@ -28,8 +28,8 @@
     "C_Cpp.autocomplete": "Disabled",
 
     // clangd configuration (cross-platform)
-    // "clangd.path": "${env:ProgramFiles}/LLVM/bin/clangd.exe",  // windows clangd path
-    "clangd.path": "/usr/bin/clangd",  // linux, macos clangd path
+    "clangd.path": "${env:ProgramFiles}/LLVM/bin/clangd.exe",  // windows clangd path
+    // "clangd.path": "/usr/bin/clangd",  // linux, macos clangd path
     "clangd.arguments": [
         "--log=verbose",
         "--pretty",
